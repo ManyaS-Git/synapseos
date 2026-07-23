@@ -10,7 +10,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@synapseos/types": "workspace:*"
+    "@synapseos/types": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.0"

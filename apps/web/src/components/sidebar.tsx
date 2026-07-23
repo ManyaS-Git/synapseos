@@ -3,7 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuthStore, useWorkspaceStore } from "@/store";
 import { useLogout } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -28,14 +28,19 @@ const NAV_ITEMS = [
     ),
   },
   {
-    label: "Memory",
-    href: "#",
+    label: "Memories",
+    href: "/memory",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
       </svg>
     ),
-    disabled: true,
+    children: [
+      { label: "All Memories", href: "/memory" },
+      { label: "Create", href: "/memory/create" },
+      { label: "Search", href: "/memory/search" },
+      { label: "Graph", href: "/memory/graph" },
+    ],
   },
   {
     label: "Agents",
@@ -71,7 +76,6 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { user } = useAuthStore();
   const { currentWorkspace } = useWorkspaceStore();
   const logoutMutation = useLogout();
@@ -106,30 +110,50 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const hasChildren = "children" in item && item.children;
           return (
-            <Link
-              key={item.label}
-              href={item.disabled ? "#" : item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                isActive
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
-                item.disabled && "opacity-50 cursor-not-allowed"
+            <div key={item.label}>
+              <Link
+                href={item.disabled ? "#" : item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  item.disabled && "opacity-50 cursor-not-allowed"
+                )}
+                onClick={(e) => {
+                  if (item.disabled) e.preventDefault();
+                }}
+              >
+                {item.icon}
+                {item.label}
+                {item.disabled && (
+                  <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                    Soon
+                  </span>
+                )}
+              </Link>
+              {hasChildren && isActive && (
+                <div className="ml-8 mt-1 space-y-0.5">
+                  {item.children.map((child: { label: string; href: string }) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className={cn(
+                        "block px-3 py-1.5 rounded-md text-xs transition-colors",
+                        pathname === child.href
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      )}
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
               )}
-              onClick={(e) => {
-                if (item.disabled) e.preventDefault();
-              }}
-            >
-              {item.icon}
-              {item.label}
-              {item.disabled && (
-                <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                  Soon
-                </span>
-              )}
-            </Link>
+            </div>
           );
         })}
       </nav>
