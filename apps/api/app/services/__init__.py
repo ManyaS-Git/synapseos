@@ -1,1 +1,13 @@
-"""Business logic services."""
+"""Service layer — business logic for all domain operations."""
+
+from app.services.auth import AuthService
+from app.services.project import ProjectService
+from app.services.user import UserService
+from app.services.workspace import WorkspaceService
+
+__all__ = [
+    "AuthService",
+    "ProjectService",
+    "UserService",
+    "WorkspaceService",
+]
