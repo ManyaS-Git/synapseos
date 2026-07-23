@@ -1,12 +1,6 @@
-/**
- * Zustand State Management
- *
- * TODO: Create the following stores:
- * - useAppStore: Global app state (theme, sidebar, etc.)
- * - useMemoryStore: Memory operations state
- * - useAgentStore: Agent communication state
- * - useGraphStore: Knowledge graph state
- * - useSettingsStore: User settings state
- */
+/* ── Store Exports ─────────────────────────────────────────────────── */
 
-export { useAppStore } from './app-store';
+export { useAuthStore } from "./auth-store";
+export { useWorkspaceStore } from "./workspace-store";
+export { useProjectStore } from "./project-store";
+export { useAppStore } from "./app-store";

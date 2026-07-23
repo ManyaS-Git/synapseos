@@ -1,117 +1,146 @@
-/**
- * Type-safe API client for communicating with the SynapseOS backend.
- *
- * Features:
- * - Environment-aware base URL
- * - Configurable request timeout
- * - Structured error handling
- * - Request/response type safety
- */
+/* ── Authentication API ────────────────────────────────────────────── */
 
-const DEFAULT_TIMEOUT_MS = 10_000;
+import type {
+  LoginRequest,
+  RegisterRequest,
+  User,
+  Workspace,
+  Project,
+} from "@/types";
 
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly statusText: string,
-    public readonly body: unknown,
-    public readonly endpoint: string,
-  ) {
-    super(`API Error ${status} ${statusText} on ${endpoint}`);
-    this.name = 'ApiError';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+class ApiError extends Error {
+  status: number;
+  detail: string;
+
+  constructor(status: number, detail: string) {
+    super(detail);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
   }
-}
-
-export class ApiTimeoutError extends Error {
-  constructor(
-    public readonly endpoint: string,
-    public readonly timeoutMs: number,
-  ) {
-    super(`Request to ${endpoint} timed out after ${timeoutMs}ms`);
-    this.name = 'ApiTimeoutError';
-  }
-}
-
-interface RequestOptions extends Omit<RequestInit, 'method' | 'body'> {
-  timeout?: number;
-}
-
-function getBaseUrl(): string {
-  if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 }
 
 async function request<T>(
-  endpoint: string,
-  options: {
-    method?: string;
-    body?: unknown;
-    timeout?: number;
-  } & RequestOptions = {},
+  path: string,
+  options: RequestInit = {}
 ): Promise<T> {
-  const { method = 'GET', body, timeout = DEFAULT_TIMEOUT_MS, headers, ...rest } = options;
-  const url = `${getBaseUrl()}${endpoint}`;
+  const url = `${API_BASE}${path}`;
+  const res = await fetch(url, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal,
-      ...rest,
-    });
-
-    if (!response.ok) {
-      let errorBody: unknown;
-      try {
-        errorBody = await response.json();
-      } catch {
-        errorBody = await response.text().catch(() => null);
-      }
-      throw new ApiError(response.status, response.statusText, errorBody, endpoint);
-    }
-
-    if (response.status === 204) {
-      return undefined as T;
-    }
-
-    return (await response.json()) as T;
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new ApiTimeoutError(endpoint, timeout);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timer);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: "Request failed" }));
+    throw new ApiError(res.status, body.detail || "Request failed");
   }
+
+  if (res.status === 204) return undefined as T;
+  return res.json();
 }
 
-export const apiClient = {
-  get: <T>(endpoint: string, opts?: RequestOptions) =>
-    request<T>(endpoint, { method: 'GET', ...opts }),
+/* ── Auth ─────────────────────────────────────────────────────────── */
 
-  post: <T>(endpoint: string, body?: unknown, opts?: RequestOptions) =>
-    request<T>(endpoint, { method: 'POST', body, ...opts }),
+export const authApi = {
+  register: (data: RegisterRequest) =>
+    request<User>("/api/v1/auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
-  put: <T>(endpoint: string, body?: unknown, opts?: RequestOptions) =>
-    request<T>(endpoint, { method: 'PUT', body, ...opts }),
+  login: (data: LoginRequest) =>
+    request<User>("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
-  patch: <T>(endpoint: string, body?: unknown, opts?: RequestOptions) =>
-    request<T>(endpoint, { method: 'PATCH', body, ...opts }),
+  logout: () =>
+    request<{ message: string }>("/api/v1/auth/logout", {
+      method: "POST",
+    }),
 
-  delete: <T>(endpoint: string, opts?: RequestOptions) =>
-    request<T>(endpoint, { method: 'DELETE', ...opts }),
+  me: () => request<User>("/api/v1/auth/me"),
 };
 
-export type { RequestOptions };
+/* ── Users ────────────────────────────────────────────────────────── */
+
+export const usersApi = {
+  getProfile: () => request<User>("/api/v1/users/me"),
+
+  updateProfile: (data: { full_name?: string; avatar_url?: string }) =>
+    request<User>("/api/v1/users/me", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+};
+
+/* ── Workspaces ───────────────────────────────────────────────────── */
+
+export const workspacesApi = {
+  list: () => request<Workspace[]>("/api/v1/workspaces"),
+
+  create: (data: { name: string; description?: string }) =>
+    request<Workspace>("/api/v1/workspaces", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  get: (id: string) => request<Workspace>(`/api/v1/workspaces/${id}`),
+
+  update: (id: string, data: { name?: string; description?: string }) =>
+    request<Workspace>(`/api/v1/workspaces/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<void>(`/api/v1/workspaces/${id}`, {
+      method: "DELETE",
+    }),
+};
+
+/* ── Projects ─────────────────────────────────────────────────────── */
+
+export const projectsApi = {
+  list: (workspaceId: string, includeArchived = false) =>
+    request<Project[]>(
+      `/api/v1/projects?workspace_id=${workspaceId}&include_archived=${includeArchived}`
+    ),
+
+  create: (
+    workspaceId: string,
+    data: { name: string; description?: string; icon?: string; color?: string }
+  ) =>
+    request<Project>(`/api/v1/projects?workspace_id=${workspaceId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  get: (id: string) => request<Project>(`/api/v1/projects/${id}`),
+
+  update: (
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      icon?: string;
+      color?: string;
+      archived?: boolean;
+    }
+  ) =>
+    request<Project>(`/api/v1/projects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    request<void>(`/api/v1/projects/${id}`, {
+      method: "DELETE",
+    }),
+};

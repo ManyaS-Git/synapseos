@@ -24,6 +24,7 @@ from app.core.logging import (
 )
 from app.core.ollama import ollama_manager
 from app.routers.health import router as health_router
+from app.routers.v1 import router as v1_router
 
 logger = structlog.get_logger("synapseos.app")
 
@@ -135,6 +136,7 @@ def create_app() -> FastAPI:
 
     # Routers
     application.include_router(health_router)
+    application.include_router(v1_router)
 
     return application
 

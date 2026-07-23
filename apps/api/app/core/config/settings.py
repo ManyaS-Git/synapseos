@@ -79,10 +79,13 @@ class AppSettings(BaseSettings):
     openai_api_key: str = Field(default="", description="OpenAI API key")
     anthropic_api_key: str = Field(default="", description="Anthropic API key")
 
-    # JWT (reserved for future use)
+    # JWT
     jwt_secret_key: str = Field(default="change-me-to-jwt-secret", description="JWT signing key")
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
-    jwt_expiration_minutes: int = Field(default=1440, description="JWT token expiry in minutes")
+    jwt_access_token_minutes: int = Field(default=30, description="Access token expiry in minutes")
+    jwt_refresh_token_days: int = Field(default=7, description="Refresh token expiry in days")
+    jwt_cookie_name: str = Field(default="synapseos_session", description="JWT cookie name")
+    jwt_cookie_domain: str | None = Field(default=None, description="JWT cookie domain")
 
     # Logging
     log_format: str = Field(default="console", description="Log format: console or json")
