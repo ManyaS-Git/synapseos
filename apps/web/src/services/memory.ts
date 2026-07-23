@@ -1,35 +1,30 @@
-/**
- * Memory Service — API client for memory operations.
- *
- * TODO: Implement the following:
- * - getMemories: List all memories with pagination
- * - getMemory: Get a single memory by ID
- * - createMemory: Create a new memory
- * - updateMemory: Update an existing memory
- * - deleteMemory: Delete a memory
- * - searchMemories: Semantic search across memories
- * - getMemoryStats: Get memory statistics
- */
+/* ── Memory Service ────────────────────────────────────────────────── */
 
-import { apiClient } from '@/lib/api';
-
-// TODO: Define types
-// interface Memory { ... }
+import { memoryApi } from "@/lib/api";
 
 export const memoryService = {
-  // TODO: Implement
-  async getAll() {
-    return apiClient('/api/v1/memory');
-  },
+  getAll: (workspaceId: string, params?: { project_id?: string; memory_type?: string; page?: number; page_size?: number }) =>
+    memoryApi.list(workspaceId, params),
 
-  async getById(id: string) {
-    return apiClient(`/api/v1/memory/${id}`);
-  },
+  getById: (id: string) => memoryApi.get(id),
 
-  async create(data: unknown) {
-    return apiClient('/api/v1/memory', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
+  create: (workspaceId: string, data: Parameters<typeof memoryApi.create>[1]) =>
+    memoryApi.create(workspaceId, data),
+
+  update: (id: string, data: Parameters<typeof memoryApi.update>[1]) =>
+    memoryApi.update(id, data),
+
+  delete: (id: string) => memoryApi.delete(id),
+
+  search: (data: Parameters<typeof memoryApi.search>[0]) =>
+    memoryApi.search(data),
+
+  recent: (workspaceId: string, limit?: number) =>
+    memoryApi.recent(workspaceId, limit),
+
+  important: (workspaceId: string, limit?: number) =>
+    memoryApi.important(workspaceId, limit),
+
+  graph: (workspaceId: string, projectId?: string) =>
+    memoryApi.graph(workspaceId, projectId),
 };

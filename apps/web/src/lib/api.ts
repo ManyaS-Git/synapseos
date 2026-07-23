@@ -1,4 +1,4 @@
-/* ── Authentication API ────────────────────────────────────────────── */
+/* ── API Client ────────────────────────────────────────────────────── */
 
 import type {
   LoginRequest,
@@ -7,6 +7,14 @@ import type {
   Workspace,
   Project,
 } from "@/types";
+import type {
+  Memory,
+  MemoryCreateRequest,
+  MemoryListResponse,
+  MemorySearchResponse,
+  MemoryUpdateRequest,
+  GraphData,
+} from "@/types/memory";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -72,7 +80,6 @@ export const authApi = {
 
 export const usersApi = {
   getProfile: () => request<User>("/api/v1/users/me"),
-
   updateProfile: (data: { full_name?: string; avatar_url?: string }) =>
     request<User>("/api/v1/users/me", {
       method: "PATCH",
@@ -84,25 +91,19 @@ export const usersApi = {
 
 export const workspacesApi = {
   list: () => request<Workspace[]>("/api/v1/workspaces"),
-
   create: (data: { name: string; description?: string }) =>
     request<Workspace>("/api/v1/workspaces", {
       method: "POST",
       body: JSON.stringify(data),
     }),
-
   get: (id: string) => request<Workspace>(`/api/v1/workspaces/${id}`),
-
   update: (id: string, data: { name?: string; description?: string }) =>
     request<Workspace>(`/api/v1/workspaces/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
-
   delete: (id: string) =>
-    request<void>(`/api/v1/workspaces/${id}`, {
-      method: "DELETE",
-    }),
+    request<void>(`/api/v1/workspaces/${id}`, { method: "DELETE" }),
 };
 
 /* ── Projects ─────────────────────────────────────────────────────── */
@@ -112,7 +113,6 @@ export const projectsApi = {
     request<Project[]>(
       `/api/v1/projects?workspace_id=${workspaceId}&include_archived=${includeArchived}`
     ),
-
   create: (
     workspaceId: string,
     data: { name: string; description?: string; icon?: string; color?: string }
@@ -121,26 +121,81 @@ export const projectsApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
-
   get: (id: string) => request<Project>(`/api/v1/projects/${id}`),
-
   update: (
     id: string,
-    data: {
-      name?: string;
-      description?: string;
-      icon?: string;
-      color?: string;
-      archived?: boolean;
-    }
+    data: { name?: string; description?: string; icon?: string; color?: string; archived?: boolean }
   ) =>
     request<Project>(`/api/v1/projects/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
+  delete: (id: string) =>
+    request<void>(`/api/v1/projects/${id}`, { method: "DELETE" }),
+};
+
+/* ── Memory ───────────────────────────────────────────────────────── */
+
+export const memoryApi = {
+  create: (workspaceId: string, data: MemoryCreateRequest) =>
+    request<Memory>(`/api/v1/memory?workspace_id=${workspaceId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  list: (
+    workspaceId: string,
+    params: {
+      project_id?: string;
+      memory_type?: string;
+      tags?: string;
+      page?: number;
+      page_size?: number;
+    } = {}
+  ) => {
+    const query = new URLSearchParams({ workspace_id: workspaceId });
+    if (params.project_id) query.set("project_id", params.project_id);
+    if (params.memory_type) query.set("memory_type", params.memory_type);
+    if (params.tags) query.set("tags", params.tags);
+    if (params.page) query.set("page", String(params.page));
+    if (params.page_size) query.set("page_size", String(params.page_size));
+    return request<MemoryListResponse>(`/api/v1/memory?${query}`);
+  },
+
+  get: (id: string) => request<Memory>(`/api/v1/memory/${id}`),
+
+  update: (id: string, data: MemoryUpdateRequest) =>
+    request<Memory>(`/api/v1/memory/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
 
   delete: (id: string) =>
-    request<void>(`/api/v1/projects/${id}`, {
-      method: "DELETE",
+    request<void>(`/api/v1/memory/${id}`, { method: "DELETE" }),
+
+  search: (data: {
+    query: string;
+    workspace_id: string;
+    project_id?: string;
+    memory_type?: string;
+    tags?: string[];
+    top_k?: number;
+    min_importance?: number;
+  }) =>
+    request<MemorySearchResponse>("/api/v1/memory/search", {
+      method: "POST",
+      body: JSON.stringify(data),
     }),
+
+  recent: (workspaceId: string, limit = 10) =>
+    request<Memory[]>(`/api/v1/memory/recent?workspace_id=${workspaceId}&limit=${limit}`),
+
+  important: (workspaceId: string, limit = 10) =>
+    request<Memory[]>(`/api/v1/memory/important?workspace_id=${workspaceId}&limit=${limit}`),
+
+  graph: (workspaceId: string, projectId?: string) => {
+    const query = new URLSearchParams({ workspace_id: workspaceId });
+    if (projectId) query.set("project_id", projectId);
+    return request<GraphData>(`/api/v1/memory/graph?${query}`);
+  },
 };

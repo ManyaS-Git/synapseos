@@ -12,9 +12,8 @@ import { useProjectStore } from "@/store/project-store";
 import type { LoginRequest, RegisterRequest } from "@/types";
 
 export function useAuth() {
-  const { user, isAuthenticated, isLoading, setUser, setLoading, logout } =
+  const { user, isAuthenticated, isLoading, setUser } =
     useAuthStore();
-  const router = useRouter();
 
   const { data: currentUser } = useQuery({
     queryKey: ["auth", "me"],

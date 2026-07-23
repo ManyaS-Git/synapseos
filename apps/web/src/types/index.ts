@@ -119,3 +119,15 @@ export interface GraphEdge {
   target: string;
   label?: string;
 }
+
+/* ── Re-export Memory Types ───────────────────────────────────────── */
+export type {
+  GraphData,
+  GraphNode as MemoryGraphNode,
+  Memory,
+  MemoryListResponse,
+  MemorySearchResponse,
+  MemorySearchResult,
+} from "./memory";
+
+export { MEMORY_TYPES, MEMORY_TYPE_COLORS } from "./memory";
