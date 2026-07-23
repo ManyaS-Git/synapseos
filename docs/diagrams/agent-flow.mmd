@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant User
+    participant Router as Router Agent
+    participant Exec as Executive Agent
+    participant Memory as Memory Agent
+    participant Research as Research Agent
+    participant LLM as LLM Provider
+
+    User->>Router: "What did I discuss about AI last week?"
+    Router->>Router: Classify intent
+    Router->>Exec: Route to Executive
+    Exec->>Memory: Search episodic memories
+    Memory-->>Exec: Return relevant memories
+    Exec->>Research: Enrich with knowledge
+    Research->>LLM: Generate response
+    LLM-->>Research: Response with context
+    Research-->>Exec: Enriched response
+    Exec-->>User: "Last week you discussed..."
