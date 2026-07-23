@@ -1,0 +1,58 @@
+graph TB
+    subgraph "User Interface"
+        Web[Next.js Web]
+        Desktop[Electron Desktop]
+        SDK[TypeScript SDK]
+    end
+
+    subgraph "API Gateway"
+        FastAPI[FastAPI]
+    end
+
+    subgraph "AI Agents"
+        Router[Router Agent]
+        Exec[Executive]
+        Memory[Memory Agent]
+        Research[Research Agent]
+        Planning[Planning Agent]
+        Reflect[Reflection Agent]
+    end
+
+    subgraph "Core Services"
+        MemEngine[Memory Engine]
+        RAG[RAG Pipeline]
+        Embed[Embeddings]
+        LLMRouter[LLM Router]
+    end
+
+    subgraph "Data Stores"
+        PG[(PostgreSQL)]
+        Qdrant[(Qdrant)]
+        Neo4j[(Neo4j)]
+        Redis[(Redis)]
+    end
+
+    subgraph "LLM Providers"
+        Ollama[Ollama Local]
+        Cloud[Cloud LLMs]
+    end
+
+    Web --> FastAPI
+    Desktop --> FastAPI
+    SDK --> FastAPI
+    FastAPI --> Router
+    Router --> Exec
+    Exec --> Memory
+    Exec --> Research
+    Exec --> Planning
+    Exec --> Reflect
+    Memory --> MemEngine
+    Research --> RAG
+    RAG --> Embed
+    LLMRouter --> Ollama
+    LLMRouter --> Cloud
+    MemEngine --> PG
+    MemEngine --> Qdrant
+    MemEngine --> Neo4j
+    Embed --> Qdrant
+    FastAPI --> Redis

@@ -1,0 +1,17 @@
+stateDiagram-v2
+    [*] --> Encoding: New Experience
+    Encoding --> WorkingMemory: Short-term Storage
+    WorkingMemory --> Consolidation: Important Enough
+    WorkingMemory --> Forgetting: Not Important
+    Consolidation --> EpisodicMemory: Time-stamped
+    Consolidation --> SemanticMemory: Extracted Facts
+    Consolidation --> ProceduralMemory: Patterns
+    EpisodicMemory --> Retrieval: Accessed
+    SemanticMemory --> Retrieval: Accessed
+    ProceduralMemory --> Retrieval: Accessed
+    Retrieval --> Reinforcement: Frequently Used
+    Reinforcement --> EpisodicMemory: Strengthened
+    EpisodicMemory --> Decay: Unused Over Time
+    SemanticMemory --> Decay: Unused Over Time
+    Decay --> Forgetting: Below Threshold
+    Forgetting --> [*]

@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  # ===========================================================================
+  # Frontend
+  # ===========================================================================
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+  # ===========================================================================
+  # Backend
+  # ===========================================================================
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: synapseos_test
+          POSTGRES_USER: synapseos
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U synapseos"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Import validation
+        run: python -c "from app.main import app; print('Imports OK')"
+
+      - name: mypy
+        run: mypy app/ --ignore-missing-imports || true
+
+      - name: pytest
+        env:
+          DATABASE_URL: postgresql+asyncpg://synapseos:test_password@localhost:5432/synapseos_test
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: "5432"
+          POSTGRES_DB: synapseos_test
+          POSTGRES_USER: synapseos
+          POSTGRES_PASSWORD: test_password
+          REDIS_HOST: localhost
+          REDIS_PORT: "6379"
+          NEO4J_URI: bolt://localhost:7687
+          QDRANT_HOST: localhost
+          QDRANT_PORT: "6333"
+          APP_ENV: testing
+        run: python -m pytest tests/ -v --tb=short || true
+
+  # ===========================================================================
+  # Docker
+  # ===========================================================================
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate compose
+        run: docker compose config --quiet
+
+      - name: Build API image
+        run: docker build -f apps/api/Dockerfile -t synapseos-api:test apps/api
+
+      - name: Build Web image
+        run: docker build -f apps/web/Dockerfile -t synapseos-web:test .

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.next/
+coverage/
+*.min.js
+*.min.css
+poetry.lock
+package-lock.json
+pnpm-lock.yaml
