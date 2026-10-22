@@ -14,7 +14,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 import redis.asyncio as aioredis
-from neo4j import AsyncDriver, async_driver
+from neo4j import AsyncDriver, AsyncGraphDatabase
 from qdrant_client import AsyncQdrantClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
@@ -168,7 +168,7 @@ class Neo4jManager:
     async def connect(self) -> None:
         """Create the async Neo4j driver."""
         logger.info("Connecting to Neo4j", uri=settings.neo4j_uri)
-        self._driver = async_driver(
+        self._driver = AsyncGraphDatabase.driver(
             settings.neo4j_uri,
             auth=(settings.neo4j_user, settings.neo4j_password),
         )

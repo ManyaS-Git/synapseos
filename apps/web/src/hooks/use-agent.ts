@@ -1,18 +1,46 @@
-/**
- * Custom hook for agent operations.
- *
- * TODO: Implement:
- * - useAgents: Query hook for agent list
- * - useAgentStatus: Query hook for agent status
- * - useSendMessage: Mutation hook for sending messages
- */
+/* ── Agent & RAG React Query Hooks ─────────────────────────────────── */
 
-import { useQuery } from '@tanstack/react-query';
-import { agentService } from '@/services/agent';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { agentService } from "@/services/agent";
+import type {
+  AgentApprovalRequest,
+  AgentChatRequest,
+  RAGQueryRequest,
+} from "@/types";
 
-export function useAgents() {
+export function useAgentTools() {
   return useQuery({
-    queryKey: ['agents'],
-    queryFn: () => agentService.list(),
+    queryKey: ["agent-tools"],
+    queryFn: () => agentService.listTools(),
+    staleTime: 1000 * 60 * 10,
+  });
+}
+
+export function useAgentChat() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (req: AgentChatRequest) => agentService.chat(req),
+    onSuccess: () => {
+      // Refresh memories and projects when agent executes actions
+      queryClient.invalidateQueries({ queryKey: ["memories"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+}
+
+export function useAgentApprove() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (req: AgentApprovalRequest) => agentService.approveAction(req),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memories"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+}
+
+export function useRAGQuery() {
+  return useMutation({
+    mutationFn: (req: RAGQueryRequest) => agentService.queryRAG(req),
   });
 }

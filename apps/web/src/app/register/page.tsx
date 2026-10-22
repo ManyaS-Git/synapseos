@@ -72,11 +72,16 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-primary mx-auto flex items-center justify-center mb-4">
-            <span className="text-primary-foreground font-bold text-xl">S</span>
+          <div className="inline-flex items-center justify-center gap-2.5 mb-3">
+            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </span>
+            <span className="font-semibold text-2xl tracking-tight">synapse<span className="text-muted-foreground font-normal">OS</span></span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
-          <p className="text-muted-foreground mt-1">Get started with SynapseOS</p>
+          <h1 className="text-xl font-semibold text-foreground">Create your account</h1>
+          <p className="text-xs text-muted-foreground mt-1">Get started with private AI intelligence</p>
         </div>
 
         {/* Form */}

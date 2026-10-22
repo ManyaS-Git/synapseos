@@ -11,6 +11,9 @@ export const memoryService = {
   create: (workspaceId: string, data: Parameters<typeof memoryApi.create>[1]) =>
     memoryApi.create(workspaceId, data),
 
+  upload: (workspaceId: string, file: File, options?: { projectId?: string; memoryType?: string; tags?: string }) =>
+    memoryApi.upload(workspaceId, file, options),
+
   update: (id: string, data: Parameters<typeof memoryApi.update>[1]) =>
     memoryApi.update(id, data),
 

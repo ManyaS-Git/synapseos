@@ -143,6 +143,35 @@ export const memoryApi = {
       body: JSON.stringify(data),
     }),
 
+  upload: async (
+    workspaceId: string,
+    file: File,
+    options?: { projectId?: string; memoryType?: string; tags?: string }
+  ) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("workspace_id", workspaceId);
+    if (options?.projectId) formData.append("project_id", options.projectId);
+    if (options?.memoryType) formData.append("memory_type", options.memoryType);
+    if (options?.tags) formData.append("tags", options.tags);
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const response = await fetch(`${API_BASE}/api/v1/memory/upload`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Failed to upload document");
+    }
+    return response.json() as Promise<Memory>;
+  },
+
   list: (
     workspaceId: string,
     params: {
@@ -199,3 +228,48 @@ export const memoryApi = {
     return request<GraphData>(`/api/v1/memory/graph?${query}`);
   },
 };
+
+/* ── Agent ────────────────────────────────────────────────────────── */
+
+export const agentApi = {
+  chat: (data: {
+    message: string;
+    workspace_id: string;
+    project_id?: string | null;
+    allow_auto_consequential?: boolean;
+  }) =>
+    request<import("@/types").AgentChatResponse>("/api/v1/agent/chat", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  approve: (data: {
+    session_id: string;
+    approved: boolean;
+    workspace_id: string;
+  }) =>
+    request<import("@/types").AgentChatResponse>("/api/v1/agent/approve", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  tools: () =>
+    request<import("@/types").AgentToolInfo[]>("/api/v1/agent/tools"),
+};
+
+/* ── RAG ──────────────────────────────────────────────────────────── */
+
+export const ragApi = {
+  query: (data: {
+    query: string;
+    workspace_id: string;
+    project_id?: string | null;
+    top_k?: number;
+    min_score?: number;
+  }) =>
+    request<import("@/types").RAGQueryResponse>("/api/v1/rag/query", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+

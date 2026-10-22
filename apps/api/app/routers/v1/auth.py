@@ -93,8 +93,9 @@ async def register(
         result["expires_in"],
     )
 
+    user_response = UserResponse.model_validate(result["user"])
     await db.commit()
-    return result["user"]
+    return user_response
 
 
 @router.post("/login", response_model=UserResponse)
@@ -102,7 +103,7 @@ async def login(
     body: LoginRequest,
     response: Response,
     db: AsyncSession = Depends(get_db),
-) -> User:
+) -> UserResponse:
     """Authenticate and log in."""
     service = AuthService(db)
     result = await service.login(email=body.email, password=body.password)
@@ -114,8 +115,9 @@ async def login(
         result["expires_in"],
     )
 
+    user_response = UserResponse.model_validate(result["user"])
     await db.commit()
-    return result["user"]
+    return user_response
 
 
 @router.post("/logout", response_model=MessageResponse)
@@ -169,6 +171,6 @@ async def refresh_token(
 @router.get("/me", response_model=UserResponse)
 async def get_me(
     current_user: User = Depends(get_current_active_user),
-) -> User:
+) -> UserResponse:
     """Get the currently authenticated user."""
-    return current_user
+    return UserResponse.model_validate(current_user)

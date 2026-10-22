@@ -1,14 +1,28 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Instrument_Sans, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import '@/styles/globals.css';
 import { QueryProvider } from '@/providers/query-provider';
 
-const inter = Inter({ subsets: ['latin'] });
+const instrumentSans = Instrument_Sans({
+  subsets: ['latin'],
+  variable: '--font-instrument',
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-instrument-serif',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains',
+});
 
 export const metadata: Metadata = {
-  title: 'SynapseOS',
+  title: 'SynapseOS — The AI That Remembers, Reasons, and Acts',
   description:
-    'A Privacy-First AI Operating System — Your Persistent Digital Intelligence',
+    'A Privacy-First Personal AI Operating System — Persistent Memory, Bounded Reasoning, and Human Approval Gates.',
 };
 
 export default function RootLayout({
@@ -18,7 +32,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body
+        className={`${instrumentSans.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+      >
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

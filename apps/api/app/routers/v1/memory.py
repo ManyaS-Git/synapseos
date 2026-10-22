@@ -1,8 +1,11 @@
 """Memory endpoints — CRUD, search, similarity, and graph visualization."""
 
+import csv
+import io
+import json
 import uuid
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -47,7 +50,7 @@ def _memory_to_response(memory) -> dict:
         "created_at": memory.created_at,
         "updated_at": memory.updated_at,
         "accessed_at": memory.accessed_at,
-        "tags": [t.tag for t in memory.tags] if memory.tags else [],
+        "tags": [t.tag for t in memory.tags] if ("tags" in memory.__dict__ and memory.tags) else [],
     }
 
 
@@ -76,8 +79,128 @@ async def create_memory(
         metadata_json=body.metadata_json,
         chunking_strategy=body.chunking_strategy,
     )
+    resp = _memory_to_response(memory)
     await db.commit()
-    return _memory_to_response(memory)
+    return resp
+
+
+@router.post("/upload", response_model=MemoryResponse, status_code=status.HTTP_201_CREATED)
+async def upload_document(
+    file: UploadFile = File(...),
+    workspace_id: uuid.UUID = Form(..., description="Workspace ID"),
+    project_id: uuid.UUID | None = Form(None, description="Optional Project ID"),
+    memory_type: str = Form("knowledge", description="Memory type"),
+    tags: str | None = Form(None, description="Comma-separated tags"),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Ingest a text, markdown, or PDF document directly into persistent memory and vector store."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename must not be empty")
+
+    filename = file.filename
+    ext = filename.lower().split(".")[-1] if "." in filename else ""
+    allowed_exts = {"txt", "md", "markdown", "pdf", "json", "csv", "log", "rst", "py", "js", "ts", "html"}
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format: .{ext}. Allowed: {', '.join(sorted(allowed_exts))}",
+        )
+
+    content_bytes = await file.read()
+    if len(content_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds maximum 10MB limit")
+
+    text_content = ""
+    if ext == "pdf":
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(content_bytes))
+            if len(reader.pages) == 0:
+                raise HTTPException(status_code=400, detail="PDF has no pages")
+            pages_text = []
+            for i, page in enumerate(reader.pages):
+                extracted = page.extract_text()
+                if extracted and extracted.strip():
+                    pages_text.append(f"--- Page {i + 1} ---\n{extracted.strip()}")
+            text_content = "\n\n".join(pages_text).strip()
+            if not text_content:
+                raise HTTPException(
+                    status_code=400,
+                    detail="PDF contains no extractable text. If this is a scanned or image-only document, note that OCR is not supported.",
+                )
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to extract text from PDF: {str(e)}")
+    elif ext == "json":
+        try:
+            raw_str = content_bytes.decode("utf-8").strip()
+            if not raw_str:
+                raise HTTPException(status_code=400, detail="JSON file is empty")
+            parsed = json.loads(raw_str)
+            text_content = json.dumps(parsed, indent=2)
+        except HTTPException:
+            raise
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid JSON syntax in uploaded file: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse JSON file: {str(e)}")
+    elif ext == "csv":
+        try:
+            raw_str = content_bytes.decode("utf-8").strip()
+            if not raw_str:
+                raise HTTPException(status_code=400, detail="CSV file is empty")
+            reader = csv.reader(io.StringIO(raw_str))
+            rows = list(reader)
+            if not rows or all(len(r) == 0 for r in rows):
+                raise HTTPException(status_code=400, detail="CSV file contains no readable data rows")
+            text_content = raw_str
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to process CSV file: {str(e)}")
+    else:
+        try:
+            text_content = content_bytes.decode("utf-8").strip()
+        except UnicodeDecodeError:
+            try:
+                text_content = content_bytes.decode("latin-1").strip()
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Failed to decode text file: {str(e)}")
+
+    if not text_content:
+        raise HTTPException(status_code=400, detail="File contains no extractable text content")
+
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    if ext not in tag_list:
+        tag_list.append(ext)
+
+    clean_title = filename.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
+
+    service = MemoryService(db)
+    memory = await service.create_memory(
+        user=current_user,
+        workspace_id=workspace_id,
+        project_id=project_id,
+        title=clean_title,
+        content=text_content,
+        memory_type=memory_type,
+        source=filename,
+        tags=tag_list,
+        importance_score=0.7,
+        confidence=1.0,
+        metadata_json={
+            "filename": filename,
+            "size_bytes": len(content_bytes),
+            "content_type": file.content_type,
+            "format": ext,
+        },
+        chunking_strategy="recursive",
+    )
+    resp = _memory_to_response(memory)
+    await db.commit()
+    return resp
 
 
 @router.get("", response_model=MemoryListResponse)

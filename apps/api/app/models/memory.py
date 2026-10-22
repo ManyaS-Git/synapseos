@@ -16,6 +16,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     func,
@@ -115,7 +116,7 @@ class Memory(Base):
     )
     source: Mapped[str | None] = mapped_column(String(255), nullable=True)
     source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    metadata_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    metadata_json: Mapped[dict | None] = mapped_column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
     importance_score: Mapped[float] = mapped_column(Float, default=0.5, nullable=False)
     confidence: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
     status: Mapped[MemoryStatus] = mapped_column(
@@ -133,8 +134,8 @@ class Memory(Base):
     )
 
     # Relationships
-    chunks = relationship("MemoryChunk", back_populates="memory", cascade="all, delete-orphan")
-    tags = relationship("MemoryTag", back_populates="memory", cascade="all, delete-orphan")
+    chunks = relationship("MemoryChunk", back_populates="memory", cascade="all, delete-orphan", lazy="selectin")
+    tags = relationship("MemoryTag", back_populates="memory", cascade="all, delete-orphan", lazy="selectin")
 
     def __repr__(self) -> str:
         return f"<Memory {self.title[:50]} ({self.memory_type})>"
@@ -227,7 +228,7 @@ class MemoryRelation(Base):
     )
     target_entity_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     target_entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    metadata_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    metadata_json: Mapped[dict | None] = mapped_column(JSONB().with_variant(JSON, "sqlite"), nullable=True)
     weight: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

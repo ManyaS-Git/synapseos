@@ -1,8 +1,5 @@
-"""Reflection Engine — Self-improvement and optimization.
+"""Reflection and self-learning module."""
 
-TODO: Implement the following:
-- MemoryReflector: Evaluate and optimize memory
-- PerformanceTracker: Track agent performance
-- QualityAssessor: Assess response quality
-- EvolutionManager: Manage self-evolution cycles
-"""
+from app.reflection.engine import ReflectionEngine, ReflectionSummary
+
+__all__ = ["ReflectionEngine", "ReflectionSummary"]

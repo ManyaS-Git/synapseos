@@ -75,6 +75,7 @@ class AuthService:
             password_hash=hash_password(password),
             full_name=full_name,
         )
+        await self.session.refresh(user)
 
         # Generate tokens
         access_token = create_access_token(user.id)
@@ -99,6 +100,7 @@ class AuthService:
         # Update last login
         user.last_login = datetime.now(timezone.utc)
         await self.session.flush()
+        await self.session.refresh(user)
 
         # Generate tokens
         access_token = create_access_token(user.id)

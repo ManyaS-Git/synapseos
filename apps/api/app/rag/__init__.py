@@ -1,8 +1,15 @@
-"""RAG Pipeline — Retrieval-Augmented Generation.
+"""RAG pipeline module."""
 
-TODO: Implement the following:
-- QueryProcessor: Understand and expand user queries
-- DocumentRetriever: Retrieve relevant documents
-- ContextAssembler: Assemble context for generation
-- ResponseGenerator: Generate grounded responses
-"""
+from app.rag.pipeline import (
+    RAGCitation,
+    RAGPipeline,
+    RAGQueryRequest,
+    RAGQueryResponse,
+)
+
+__all__ = [
+    "RAGCitation",
+    "RAGPipeline",
+    "RAGQueryRequest",
+    "RAGQueryResponse",
+]

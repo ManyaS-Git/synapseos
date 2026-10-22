@@ -72,12 +72,34 @@ class AppSettings(BaseSettings):
     qdrant_grpc_port: int = Field(default=6334, description="Qdrant gRPC port")
     qdrant_collection: str = Field(default="synapseos", description="Qdrant collection name")
 
-    # LLM / Ollama
-    llm_default_provider: str = Field(default="local", description="Default LLM provider")
+    # LLM & Providers
+    llm_default_provider: str = Field(default="nebius", description="Default LLM provider: nebius, local, openai, mock")
+    llm_provider: str = Field(default="nebius", description="Active LLM provider: nebius, local, openai, mock")
     ollama_host: str = Field(default="http://localhost:11434", description="Ollama server URL")
     ollama_model: str = Field(default="llama3.2", description="Default Ollama model")
     openai_api_key: str = Field(default="", description="OpenAI API key")
     anthropic_api_key: str = Field(default="", description="Anthropic API key")
+
+    # Nebius Token Factory / NVIDIA Nemotron Settings
+    nebius_api_key: str = Field(default="", description="Nebius Token Factory API key")
+    nebius_base_url: str = Field(
+        default="https://api.tokenfactory.nebius.com/v1",
+        description="Nebius Token Factory OpenAI-compatible API base URL",
+    )
+    nebius_model: str = Field(
+        default="nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",
+        description="NVIDIA Nemotron model on Nebius Token Factory",
+    )
+    nebius_timeout_seconds: float = Field(
+        default=60.0,
+        description="Timeout for Nebius inference requests in seconds",
+    )
+
+    # Privacy and Data Routing
+    privacy_mode: str = Field(
+        default="hybrid",
+        description="Privacy boundary: local_only, hybrid, cloud_allowed",
+    )
 
     # JWT
     jwt_secret_key: str = Field(default="change-me-to-jwt-secret", description="JWT signing key")

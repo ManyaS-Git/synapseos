@@ -131,3 +131,18 @@ export type {
 } from "./memory";
 
 export { MEMORY_TYPES, MEMORY_TYPE_COLORS } from "./memory";
+
+/* ── Re-export Agent & RAG Types ──────────────────────────────────── */
+export type {
+  AgentStep,
+  AgentPlan,
+  ReflectionSummary,
+  AgentChatRequest,
+  AgentChatResponse,
+  AgentApprovalRequest,
+  RAGCitation,
+  RAGQueryRequest,
+  RAGQueryResponse,
+  AgentToolInfo,
+} from "./agent";
+

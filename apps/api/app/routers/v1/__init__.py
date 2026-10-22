@@ -2,9 +2,11 @@
 
 from fastapi import APIRouter
 
+from app.routers.v1.agent import router as agent_router
 from app.routers.v1.auth import router as auth_router
 from app.routers.v1.memory import router as memory_router
 from app.routers.v1.projects import router as projects_router
+from app.routers.v1.rag import router as rag_router
 from app.routers.v1.users import router as users_router
 from app.routers.v1.workspaces import router as workspaces_router
 
@@ -15,3 +17,7 @@ router.include_router(users_router)
 router.include_router(workspaces_router)
 router.include_router(projects_router)
 router.include_router(memory_router)
+router.include_router(rag_router)
+router.include_router(agent_router)
+
+

@@ -1,65 +1,57 @@
-/* ── Root Page — Landing / Redirect ────────────────────────────────── */
+/* ── Root Page — SynapseOS Marketing Landing Page ─────────────────────── */
 
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
+import { Navigation } from "@/components/landing/navigation";
+import { HeroSection } from "@/components/landing/hero-section";
+import { FeaturesSection } from "@/components/landing/features-section";
+import { HowItWorksSection } from "@/components/landing/how-it-works-section";
+import { DevelopersSection } from "@/components/landing/developers-section";
+import { InfrastructureSection } from "@/components/landing/infrastructure-section";
+import { IntegrationsSection } from "@/components/landing/integrations-section";
+import { MetricsSection } from "@/components/landing/metrics-section";
+import { PricingSection } from "@/components/landing/pricing-section";
+import { SecuritySection } from "@/components/landing/security-section";
+import { TestimonialsSection } from "@/components/landing/testimonials-section";
+import { CtaSection } from "@/components/landing/cta-section";
+import { FooterSection } from "@/components/landing/footer-section";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export default function HomePage() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.push("/dashboard");
-    }
-  }, [isLoading, isAuthenticated, router]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground animate-pulse">Loading SynapseOS...</p>
-      </div>
-    );
-  }
+  const { isAuthenticated, user } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Hero */}
-      <main className="flex-1 flex items-center justify-center px-4">
-        <div className="text-center max-w-2xl">
-          <div className="w-16 h-16 rounded-2xl bg-primary mx-auto flex items-center justify-center mb-6">
-            <span className="text-primary-foreground font-bold text-3xl">S</span>
-          </div>
-          <h1 className="text-5xl font-bold text-foreground mb-4">SynapseOS</h1>
-          <p className="text-xl text-muted-foreground mb-8">
-            A Privacy-First AI Operating System
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <Link
-              href="/login"
-              className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="px-6 py-3 border border-border text-foreground font-medium rounded-lg hover:bg-muted transition-colors"
-            >
-              Create account
-            </Link>
-          </div>
-        </div>
-      </main>
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-foreground selection:text-background">
+      {isAuthenticated && (
+        <aside aria-label="Authenticated session" className="bg-primary/10 border-b border-primary/20 py-2.5 px-4 text-center text-xs font-medium text-foreground sticky top-0 z-50 backdrop-blur-md flex items-center justify-center gap-2">
+          <Sparkles className="size-3.5 text-primary" />
+          <span>Signed in as <strong>{user?.full_name || user?.username}</strong></span>
+          <Link
+            href="/dashboard"
+            className="ml-2 inline-flex items-center gap-1 underline underline-offset-4 font-semibold text-primary hover:text-primary/80"
+          >
+            Go to SynapseOS Dashboard <ArrowRight className="size-3" />
+          </Link>
+        </aside>
+      )}
 
-      {/* Footer */}
-      <footer className="border-t border-border px-8 py-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          SynapseOS v0.1.0 — In Active Development
-        </p>
-      </footer>
+      <Navigation />
+      <main id="main-content">
+        <HeroSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <DevelopersSection />
+        <InfrastructureSection />
+        <IntegrationsSection />
+        <MetricsSection />
+        <PricingSection />
+        <SecuritySection />
+        <TestimonialsSection />
+        <CtaSection />
+      </main>
+      <FooterSection />
     </div>
   );
 }

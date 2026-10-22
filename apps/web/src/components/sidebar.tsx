@@ -4,37 +4,44 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Brain,
+  LayoutDashboard,
+  FolderKanban,
+  MessageSquareText,
+  GitBranch,
+  Settings2,
+  CircleDot,
+  LogOut,
+  ChevronDown,
+} from "lucide-react";
 import { useAuthStore, useWorkspaceStore } from "@/store";
 import { useLogout } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
+interface NavItem {
+  label: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+  disabled?: boolean;
+  children?: { label: string; href: string }[];
+}
+
+const NAV_ITEMS: NavItem[] = [
   {
     label: "Dashboard",
     href: "/dashboard",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
+    icon: LayoutDashboard,
   },
   {
-    label: "Projects",
-    href: "/projects",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-      </svg>
-    ),
+    label: "Assistant Copilot",
+    href: "/assistant",
+    icon: MessageSquareText,
   },
   {
     label: "Memories",
     href: "/memory",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-      </svg>
-    ),
+    icon: Brain,
     children: [
       { label: "All Memories", href: "/memory" },
       { label: "Create", href: "/memory/create" },
@@ -43,34 +50,19 @@ const NAV_ITEMS = [
     ],
   },
   {
-    label: "Agents",
-    href: "#",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-    ),
-    disabled: true,
+    label: "Knowledge Graph",
+    href: "/memory/graph",
+    icon: GitBranch,
   },
   {
-    label: "Knowledge Graph",
-    href: "#",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-      </svg>
-    ),
-    disabled: true,
+    label: "Projects",
+    href: "/projects",
+    icon: FolderKanban,
   },
   {
     label: "Settings",
     href: "/settings",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
+    icon: Settings2,
   },
 ];
 
@@ -84,51 +76,68 @@ export function Sidebar() {
     logoutMutation.mutate();
   };
 
+  const workspaceName = currentWorkspace?.name || (user ? `${user.username}'s workspace` : "Workspace");
+  const userInitials = user?.full_name
+    ? user.full_name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user?.username?.slice(0, 2).toUpperCase() || "SO";
+
   return (
-    <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r border-border bg-card">
+    <aside className="hidden lg:flex lg:flex-col lg:w-[248px] lg:border-r border-border bg-sidebar px-4 py-5 shrink-0 min-h-screen">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-          <span className="text-primary-foreground font-bold text-sm">S</span>
-        </div>
-        <div>
-          <h1 className="font-semibold text-foreground">SynapseOS</h1>
-          <p className="text-xs text-muted-foreground">AI Operating System</p>
-        </div>
+      <div className="flex items-center gap-2.5 px-2">
+        <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+          <Brain className="size-4" />
+        </span>
+        <span className="font-semibold tracking-[-0.02em]">
+          synapse<span className="text-muted-foreground">OS</span>
+        </span>
       </div>
 
       {/* Workspace Selector */}
-      {currentWorkspace && (
-        <div className="px-4 py-3 border-b border-border">
-          <p className="text-xs text-muted-foreground mb-1">Workspace</p>
-          <p className="text-sm font-medium text-foreground truncate">
-            {currentWorkspace.name}
+      <div className="mt-6 flex items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/50 px-3 py-2.5 text-left">
+        <div className="grid size-7 place-items-center rounded-md bg-foreground text-xs font-semibold text-background">
+          {workspaceName.charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-medium">{workspaceName}</p>
+          <p className="truncate text-[10px] text-muted-foreground">
+            {currentWorkspace?.description || "Personal knowledge base"}
           </p>
         </div>
-      )}
+        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+      </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="mt-6 flex-1 space-y-1" aria-label="Primary navigation">
+        <p className="mb-2 px-3 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          Workspace
+        </p>
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
           const hasChildren = "children" in item && item.children;
+          const Icon = item.icon;
           return (
             <div key={item.label}>
               <Link
                 href={item.disabled ? "#" : item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                   isActive
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                    : "text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                   item.disabled && "opacity-50 cursor-not-allowed"
                 )}
                 onClick={(e) => {
                   if (item.disabled) e.preventDefault();
                 }}
               >
-                {item.icon}
-                {item.label}
+                <Icon className="size-4 shrink-0" />
+                <span>{item.label}</span>
                 {item.disabled && (
                   <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                     Soon
@@ -136,16 +145,16 @@ export function Sidebar() {
                 )}
               </Link>
               {hasChildren && isActive && (
-                <div className="ml-8 mt-1 space-y-0.5">
-                  {item.children.map((child: { label: string; href: string }) => (
+                <div className="ml-7 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">
+                  {item.children?.map((child: { label: string; href: string }) => (
                     <Link
                       key={child.href}
                       href={child.href}
                       className={cn(
-                        "block px-3 py-1.5 rounded-md text-xs transition-colors",
+                        "block px-2.5 py-1 rounded-md text-xs transition-colors",
                         pathname === child.href
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          ? "bg-sidebar-accent text-sidebar-foreground font-medium"
+                          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                       )}
                     >
                       {child.label}
@@ -158,28 +167,42 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User Section */}
-      <div className="border-t border-border px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary font-medium text-sm">
-              {user?.username?.[0]?.toUpperCase() || "U"}
+      {/* Memory health & user section */}
+      <div className="mt-auto space-y-2 pt-4">
+        <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/30 p-3">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              Memory health
             </span>
+            <CircleDot className="size-3 text-emerald-500" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              {user?.full_name || user?.username}
+          <div className="mb-2 flex items-end justify-between">
+            <span className="text-base font-medium">92%</span>
+            <span className="text-[10px] text-muted-foreground">Vectorized</span>
+          </div>
+          <div className="h-1 overflow-hidden rounded-full bg-border">
+            <div className="h-full w-[92%] rounded-full bg-emerald-500" />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 border-t border-sidebar-border px-2 pt-3">
+          <div className="grid size-7 place-items-center rounded-full bg-gradient-to-br from-violet-400 to-blue-500 text-xs font-semibold text-white shadow-xs">
+            {userInitials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-sidebar-foreground">
+              {user?.full_name || user?.username || "Pilot"}
             </p>
-            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            <p className="truncate text-[10px] text-muted-foreground">
+              {user?.email || "Personal workspace"}
+            </p>
           </div>
           <button
             onClick={handleLogout}
-            className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+            className="p-1.5 text-muted-foreground hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent transition-colors"
             title="Log out"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+            <LogOut className="size-3.5" />
           </button>
         </div>
       </div>

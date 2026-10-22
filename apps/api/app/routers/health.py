@@ -87,6 +87,11 @@ async def readiness() -> JSONResponse:
     ollama_result = await ollama_manager.health_check()
     services["ollama"] = ollama_result
 
+    # Nebius Token Factory / NVIDIA Nemotron status
+    from app.core.llm.nebius import nebius_client
+    nebius_health = await nebius_client.health_check()
+    services["nebius_token_factory"] = nebius_health
+
     elapsed_ms = (time.perf_counter() - start) * 1000
 
     response: dict[str, object] = {

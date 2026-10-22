@@ -146,6 +146,7 @@ class MemoryService:
         except Exception as e:
             logger.warning("Graph creation failed, memory saved without graph node", error=str(e))
 
+        await self.session.refresh(memory)
         return memory
 
     async def get_memory(self, memory_id: uuid.UUID, user: User) -> Memory:
@@ -247,10 +248,11 @@ class MemoryService:
 
         # Delete from Qdrant
         try:
-            if memory.embedding_id:
-                # Delete all chunks
-                chunk_ids = [f"mem_{memory.id}_chunk_{i}" for i in range(20)]  # reasonable max
-                await self.vector_store.batch_delete(chunk_ids)
+            chunk_ids = [f"mem_{memory.id}_chunk_{i}" for i in range(50)]
+            if hasattr(self.vector_store, "_memory_vectors"):
+                local_matches = [k for k in self.vector_store._memory_vectors.keys() if str(memory.id) in k]
+                chunk_ids = list(set(chunk_ids + local_matches))
+            await self.vector_store.batch_delete(chunk_ids)
         except Exception as e:
             logger.warning("Vector deletion failed", error=str(e))
 

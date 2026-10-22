@@ -1,21 +1,29 @@
-/* ── Agent Service (stub) ──────────────────────────────────────────── */
+/* ── Agent & RAG Service ────────────────────────────────────────────── */
 
-// TODO: Implement agent service when agent-runtime is built
+import { agentApi, ragApi } from "@/lib/api";
+import type {
+  AgentApprovalRequest,
+  AgentChatRequest,
+  AgentChatResponse,
+  AgentToolInfo,
+  RAGQueryRequest,
+  RAGQueryResponse,
+} from "@/types";
 
 export const agentService = {
-  async sendMessage(agentId: string, message: string) {
-    // eslint-disable-next-line no-unused-vars
-    void agentId; void message;
-    throw new Error("Agent service not yet implemented");
+  chat: async (req: AgentChatRequest): Promise<AgentChatResponse> => {
+    return agentApi.chat(req);
   },
 
-  async getStatus(agentId: string) {
-    // eslint-disable-next-line no-unused-vars
-    void agentId;
-    throw new Error("Agent service not yet implemented");
+  approveAction: async (req: AgentApprovalRequest): Promise<AgentChatResponse> => {
+    return agentApi.approve(req);
   },
 
-  async list() {
-    throw new Error("Agent service not yet implemented");
+  listTools: async (): Promise<AgentToolInfo[]> => {
+    return agentApi.tools();
+  },
+
+  queryRAG: async (req: RAGQueryRequest): Promise<RAGQueryResponse> => {
+    return ragApi.query(req);
   },
 };

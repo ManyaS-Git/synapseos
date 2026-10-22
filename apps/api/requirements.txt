@@ -39,6 +39,7 @@ email-validator==2.2.0
 python-dotenv==1.0.1
 structlog==24.2.0
 tenacity==8.4.1
+pypdf>=5.0.0
 
 # Testing
 pytest==8.2.2

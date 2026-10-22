@@ -22,18 +22,23 @@ router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 async def list_workspaces(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-) -> list[dict]:
+) -> list[WorkspaceResponse]:
     """List all workspaces the current user belongs to."""
     service = WorkspaceService(db)
     workspaces = await service.list_user_workspaces(current_user)
     return [
-        {
-            **ws.__dict__,
-            "member_count": data["member_count"],
-            "project_count": data["project_count"],
-        }
+        WorkspaceResponse(
+            id=data["workspace"].id,
+            owner_id=data["workspace"].owner_id,
+            name=data["workspace"].name,
+            slug=data["workspace"].slug,
+            description=data["workspace"].description,
+            created_at=data["workspace"].created_at,
+            updated_at=data["workspace"].updated_at,
+            member_count=data["member_count"],
+            project_count=data["project_count"],
+        )
         for data in workspaces
-        for ws in [data["workspace"]]
     ]
 
 
@@ -42,7 +47,7 @@ async def create_workspace(
     body: WorkspaceCreateRequest,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> WorkspaceResponse:
     """Create a new workspace."""
     service = WorkspaceService(db)
     workspace = await service.create_workspace(
@@ -50,11 +55,18 @@ async def create_workspace(
         name=body.name,
         description=body.description,
     )
-    return {
-        **workspace.__dict__,
-        "member_count": 1,
-        "project_count": 0,
-    }
+    await db.commit()
+    return WorkspaceResponse(
+        id=workspace.id,
+        owner_id=workspace.owner_id,
+        name=workspace.name,
+        slug=workspace.slug,
+        description=workspace.description,
+        created_at=workspace.created_at,
+        updated_at=workspace.updated_at,
+        member_count=1,
+        project_count=0,
+    )
 
 
 @router.get("/{workspace_id}", response_model=WorkspaceResponse)
