@@ -42,6 +42,7 @@ class PostgreSQLManager:
     def __init__(self) -> None:
         self._engine: AsyncEngine | None = None
         self._session_factory: async_sessionmaker[AsyncSession] | None = None
+        self._last_error: str | None = None
 
     @property
     def engine(self) -> AsyncEngine:
@@ -86,27 +87,34 @@ class PostgreSQLManager:
                 async with self._engine.begin() as conn:
                     await conn.run_sync(Base.metadata.create_all)
             logger.info("Database connection established")
+            self._last_error = None
         except Exception as exc:
+            self._last_error = f"{type(exc).__name__}: {str(exc)}"
             if settings.is_development or settings.is_testing or settings.storage_mode in ("local_embedded", "auto"):
                 logger.warning(
                     "Primary database unavailable. Initializing durable local SQLite database fallback.",
                     error=str(exc),
                 )
-                local_dir = settings.data_dir
-                os.makedirs(local_dir, exist_ok=True)
-                local_db_path = os.path.join(local_dir, "synapseos_local.db")
-                fallback_url = f"sqlite+aiosqlite:///{local_db_path}"
+                try:
+                    local_dir = settings.data_dir
+                    os.makedirs(local_dir, exist_ok=True)
+                    local_db_path = os.path.join(local_dir, "synapseos_local.db")
+                    fallback_url = f"sqlite+aiosqlite:///{local_db_path}"
 
-                self._engine = create_async_engine(fallback_url, echo=settings.app_debug)
-                self._session_factory = async_sessionmaker(
-                    bind=self._engine,
-                    class_=AsyncSession,
-                    expire_on_commit=False,
-                )
-                from app.models import Base
-                async with self._engine.begin() as conn:
-                    await conn.run_sync(Base.metadata.create_all)
-                logger.info("Local SQLite database fallback initialized and schema verified", path=local_db_path)
+                    self._engine = create_async_engine(fallback_url, echo=settings.app_debug)
+                    self._session_factory = async_sessionmaker(
+                        bind=self._engine,
+                        class_=AsyncSession,
+                        expire_on_commit=False,
+                    )
+                    from app.models import Base
+                    async with self._engine.begin() as conn:
+                        await conn.run_sync(Base.metadata.create_all)
+                    logger.info("Local SQLite database fallback initialized and schema verified", path=local_db_path)
+                    self._last_error = None
+                except Exception as fb_exc:
+                    self._last_error = f"SQLite fallback failed: {type(fb_exc).__name__}: {str(fb_exc)}"
+                    raise
             else:
                 raise
 
@@ -121,7 +129,8 @@ class PostgreSQLManager:
     async def health_check(self) -> dict[str, Any]:
         """Verify PostgreSQL is reachable by executing a simple query."""
         if not self._engine:
-            return {"status": "unavailable", "error": "Engine not initialized"}
+            err_msg = f"Engine not initialized. Detail: {self._last_error}" if self._last_error else "Engine not initialized"
+            return {"status": "unavailable", "error": err_msg}
         try:
             async with self._engine.connect() as conn:
                 result = await conn.execute(

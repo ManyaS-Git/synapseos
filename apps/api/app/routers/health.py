@@ -29,6 +29,7 @@ async def root() -> dict[str, str]:
     return {
         "name": "SynapseOS API",
         "version": "0.4.0",
+        "release": "phase-5.1",
         "docs": docs_path,
         "status": "running",
     }
