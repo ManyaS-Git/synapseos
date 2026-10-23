@@ -96,6 +96,7 @@ async def register(
         result["refresh_token"],
         result["expires_in"],
     )
+    response.headers["X-Access-Token"] = result["access_token"]
 
     user_response = UserResponse.model_validate(result["user"])
     await db.commit()
@@ -118,6 +119,7 @@ async def login(
         result["refresh_token"],
         result["expires_in"],
     )
+    response.headers["X-Access-Token"] = result["access_token"]
 
     user_response = UserResponse.model_validate(result["user"])
     await db.commit()

@@ -225,6 +225,7 @@ def setup_middleware(app: FastAPI) -> None:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["X-Request-ID", "X-Access-Token"],
     )
 
     app.add_middleware(RequestLoggingMiddleware)

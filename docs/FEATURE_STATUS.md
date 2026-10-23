@@ -1,6 +1,6 @@
-# SynapseOS Feature Status Specification (Phase 4)
+# SynapseOS Feature Status Specification (Phase 6 Final Release)
 
-**Last Updated:** Phase 4 — Production Deployment, Security Audit & Private Beta Release  
+**Last Updated:** Phase 6 — Final Hackathon Hardening, AI Validation & Release Audit  
 **Version:** `0.4.0`  
 **Architecture:** FastAPI Backend + Next.js 14 Frontend + NVIDIA Nemotron via Nebius Token Factory  
 
@@ -80,9 +80,9 @@ This document provides a transparent, evidence-based breakdown of all capabiliti
 | Security Control | Status | Implementation & Notes |
 | :--- | :--- | :--- |
 | **Password Hashing** | `VERIFIED` | Argon2id (`m=65536, t=3, p=4`) via `pwd_context`. |
-| **JWT Session Security** | `VERIFIED` | HTTP-only, SameSite=Lax session cookies with Authorization Bearer header support. |
+| **JWT Session Security (Dual-Defense)** | `VERIFIED` | HTTP-only SameSite=None secure session cookies with automatic Authorization Bearer header fallback via X-Access-Token header. |
 | **Tenant Isolation** | `VERIFIED` | Server-side workspace authorization on all CRUD and search endpoints. |
-| **Production Settings Invariants** | `VERIFIED` | Validates `app_debug=False`, secret lengths $\ge 16$, no default secrets, no wildcard CORS. Tested in `test_security_audit.py`. |
+| **Production Settings Invariants** | `VERIFIED` | Validates `app_debug=False`, secret lengths $\ge 16$, no default secrets, no wildcard CORS. 19 tests in `test_security_audit.py`. |
 | **HTTP Security Headers** | `VERIFIED` | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`. |
 | **Request ID Tracing & Error Sanitization** | `VERIFIED` | `X-Request-ID` stamped on responses and correlated in HTTP 500 error payloads without stack trace leaks. |
 | **Path Traversal Protection** | `VERIFIED` | Document upload filenames sanitized using `FilePath(filename).name` stripping directory traversal paths. Tested in `test_security_audit.py`. |

@@ -475,3 +475,23 @@ async def test_logout_invalidates_session_cookie():
     assert "synapseos_session=" in cookie_header
     assert "Max-Age=0" in cookie_header or "expires=" in cookie_header.lower()
 
+
+@pytest.mark.asyncio
+async def test_auth_headers_expose_access_token():
+    """Register endpoint sets X-Access-Token header for cross-origin token fallback."""
+    transport = ASGITransport(app=app)
+    ts = int(time.time() * 1000)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": f"header_test_{ts}@example.com",
+                "username": f"user_{ts}",
+                "password": "SecurePassword123!",
+                "full_name": "Header Tester",
+            },
+        )
+    assert res.status_code == 201
+    assert "x-access-token" in res.headers
+    assert len(res.headers["x-access-token"]) > 20
+

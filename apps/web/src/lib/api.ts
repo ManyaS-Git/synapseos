@@ -36,14 +36,18 @@ async function request<T>(
 ): Promise<T> {
   const url = `${API_BASE}${path}`;
   let res: Response;
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
   try {
     res = await fetch(url, {
       ...options,
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers,
     });
   } catch (err) {
     if (err instanceof ApiError) throw err;
@@ -54,7 +58,16 @@ async function request<T>(
     throw err;
   }
 
+  // Capture token if returned in header (supports cross-domain cookie-restricted browsers)
+  const tokenHeader = res.headers.get("x-access-token");
+  if (tokenHeader && typeof window !== "undefined") {
+    localStorage.setItem("access_token", tokenHeader);
+  }
+
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+    }
     const body = await res.json().catch(() => ({ detail: "Request failed" }));
     throw new ApiError(res.status, body.detail || "Request failed");
   }
@@ -85,10 +98,14 @@ export const authApi = {
       body: JSON.stringify(data),
     }),
 
-  logout: () =>
-    request<{ message: string }>("/api/v1/auth/logout", {
+  logout: async () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+    }
+    return request<{ message: string }>("/api/v1/auth/logout", {
       method: "POST",
-    }),
+    });
+  },
 
   me: () => request<User>("/api/v1/auth/me"),
 };
