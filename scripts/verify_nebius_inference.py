@@ -63,7 +63,7 @@ async def verify_nebius(allow_simulated: bool = False) -> int:
         print("  5. Navigate to 'API Keys', generate an API key, and copy it.")
         print("  6. Set the key in your local .env file:")
         print("     NEBIUS_API_KEY=\"your_actual_key_here\"")
-        print("     NEBIUS_MODEL=\"nvidia/nemotron-4-340b-instruct\"")
+        print("     NEBIUS_MODEL=\"nvidia/Llama-3.1-Nemotron-70B-Instruct-HF\"")
         print("  7. Re-run this verification script:")
         print("     python scripts/verify_nebius_inference.py\n")
 
