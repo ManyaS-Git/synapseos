@@ -29,13 +29,15 @@ def _set_auth_cookies(
     expires_in: int,
 ) -> None:
     """Set HTTP-only secure cookies for access and refresh tokens."""
+    samesite_val = "none" if settings.is_production else "lax"
+    is_secure = True if samesite_val == "none" else settings.is_production
     response.set_cookie(
         key=settings.jwt_cookie_name,
         value=access_token,
         max_age=expires_in,
         httponly=True,
-        secure=settings.is_production,
-        samesite="lax",
+        secure=is_secure,
+        samesite=samesite_val,
         domain=settings.jwt_cookie_domain,
     )
     response.set_cookie(
@@ -43,26 +45,28 @@ def _set_auth_cookies(
         value=refresh_token,
         max_age=settings.jwt_refresh_token_days * 86400,
         httponly=True,
-        secure=settings.is_production,
-        samesite="lax",
+        secure=is_secure,
+        samesite=samesite_val,
         domain=settings.jwt_cookie_domain,
     )
 
 
 def _clear_auth_cookies(response: Response) -> None:
     """Clear authentication cookies."""
+    samesite_val = "none" if settings.is_production else "lax"
+    is_secure = True if samesite_val == "none" else settings.is_production
     response.delete_cookie(
         key=settings.jwt_cookie_name,
         httponly=True,
-        secure=settings.is_production,
-        samesite="lax",
+        secure=is_secure,
+        samesite=samesite_val,
         domain=settings.jwt_cookie_domain,
     )
     response.delete_cookie(
         key="refresh_token",
         httponly=True,
-        secure=settings.is_production,
-        samesite="lax",
+        secure=is_secure,
+        samesite=samesite_val,
         domain=settings.jwt_cookie_domain,
     )
 

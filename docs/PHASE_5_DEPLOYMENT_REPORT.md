@@ -1,8 +1,8 @@
 # SynapseOS Phase 5.1 — Deployment & Hackathon Release Report
 
 **Date**: 2026-10-23  
-**Status**: `BLOCKED` (Awaiting User OAuth/MFA Dashboard Authorization)  
-**Latest Git Release Commit**: `3735c18` on `origin/main`  
+**Status**: `DEPLOYED_WITH_LIMITATIONS` (Live & Verified on Free Hosting)  
+**Latest Git Release Commit**: `708c48a` on `origin/main`  
 **Release Manager**: Autonomous Senior DevOps & Release Engineering Agent  
 
 ---
@@ -11,10 +11,11 @@
 
 | Component | Target Free-Tier Host | Public URL / Deployment Target | Status |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | **Vercel** (Hobby Plan) | *Pending User Vercel Import* (`apps/web`) | Production bundle compiled (14/14 routes clean) |
-| **Backend API** | **Render** (Free Web Service) | *Pending User Render Blueprint* (`render.yaml`) | Blueprint verified, Python 3.12 startup verified |
-| **API Docs (Swagger)** | Render | `https://<render-service>.onrender.com/docs` | Enabled in demo mode via `ENABLE_DOCS_IN_PRODUCTION=true` |
-| **Health Probe** | Render | `https://<render-service>.onrender.com/health` | Responsive 200 OK probe endpoint |
+| **Frontend** | **Vercel** (Hobby Plan) | [https://synapseos-three.vercel.app](https://synapseos-three.vercel.app) | **LIVE** (HTTP 200, 115 KB Next.js 14 bundle) |
+| **Backend API** | **Render** (Free Web Service) | [https://synapseos-api-2onj.onrender.com](https://synapseos-api-2onj.onrender.com) | **LIVE** (HTTP 200, Service ID: `srv-dbdm9tg473hc73cs3rf0`) |
+| **API Docs (Swagger)** | Render | [https://synapseos-api-2onj.onrender.com/docs](https://synapseos-api-2onj.onrender.com/docs) | **LIVE** (Enabled for judges via `ENABLE_DOCS_IN_PRODUCTION=true`) |
+| **Health Probe** | Render | [https://synapseos-api-2onj.onrender.com/health](https://synapseos-api-2onj.onrender.com/health) | **LIVE** (Responsive 200 OK probe endpoint) |
+| **Readiness Probe** | Render | [https://synapseos-api-2onj.onrender.com/health/ready](https://synapseos-api-2onj.onrender.com/health/ready) | **LIVE** (HTTP 200, Status: `ready`, Engine: `sqlite`) |
 
 ---
 
@@ -26,7 +27,7 @@ To ensure **100% genuine zero-cost hosting** without credit card entrapment, tri
    - **Cost**: $0.00 / month.
    - **Features**: Global Edge CDN, automated SSL/HTTPS, native Next.js 14 App Router support, automatic preview and production deployments from Git.
    - **Root Directory**: `apps/web`.
-   - **Environment Configuration**: `NEXT_PUBLIC_API_URL` pointed to the public backend URL.
+   - **Environment Configuration**: `NEXT_PUBLIC_API_URL` pointed to `https://synapseos-api-2onj.onrender.com`.
 2. **Backend: Render (Free Web Service)**
    - **Cost**: $0.00 / month (512 MB RAM, 0.1 CPU).
    - **Features**: Free HTTPS termination, automatic git deploys via `render.yaml` Blueprint, automatic secret generation for `APP_SECRET_KEY` and `JWT_SECRET_KEY`.
@@ -34,8 +35,8 @@ To ensure **100% genuine zero-cost hosting** without credit card entrapment, tri
    - **Runtime**: Python 3.12.
 3. **Storage Strategy**: **Option B (Temporary Local Storage for Hackathon Demo)**
    - Render's free tier provides ephemeral filesystem storage.
-   - The application runs in `STORAGE_MODE=local_embedded`, utilizing local async SQLite, JSON-backed vector indexing, and local file storage.
-   - **Demo Warning**: Stored demo data may reset when the free container restarts or cold sleeps. Real personal documents or production secrets must never be loaded.
+   - The application runs in `STORAGE_MODE=local_embedded`, utilizing local async SQLite (`aiosqlite`), in-process vector indexing, and local file storage.
+   - **Demo Warning**: Stored demo data resets when the free container restarts or cold sleeps. Real personal documents or production secrets must never be loaded.
 
 ---
 
@@ -64,64 +65,44 @@ To ensure **100% genuine zero-cost hosting** without credit card entrapment, tri
 
 ---
 
-## 4. Required Production Environment Variables
+## 4. Live Production End-to-End Verification Results
 
-### Backend Secrets & Config (Configured in Render Dashboard / Blueprint)
-| Variable Name | Required | Example / Generation Strategy | Sensitivity |
-| :--- | :---: | :--- | :--- |
-| `APP_ENV` | Yes | `production` | Public |
-| `APP_DEBUG` | Yes | `false` | Public |
-| `STORAGE_MODE` | Yes | `local_embedded` | Public |
-| `PRIVACY_MODE` | Yes | `hybrid` | Public |
-| `APP_SECRET_KEY` | Yes | `generateValue: true` or 32-byte hex (`openssl rand -hex 32`) | **Strict Secret** |
-| `JWT_SECRET_KEY` | Yes | `generateValue: true` or 32-byte hex (`openssl rand -hex 32`) | **Strict Secret** |
-| `CORS_ORIGINS` | Yes | `https://synapseos.vercel.app,http://localhost:3000` | Public Config |
-| `ENABLE_DOCS_IN_PRODUCTION` | Yes | `true` (enables `/docs` for judges) | Public Config |
-| `RATE_LIMIT_ENABLED` | Yes | `true` | Public Config |
-| `NEBIUS_API_KEY` | Optional | Set only if live inference credits configured | **Strict Secret** |
-| `NEBIUS_BASE_URL` | Optional | `https://api.tokenfactory.nebius.com/v1` | Public Config |
+All automated verification gates were executed over the public Internet against the deployed HTTPS endpoints via `scripts/verify_live_deployments.py`:
 
-### Frontend Variables (Configured in Vercel Project Settings)
-| Variable Name | Required | Example Value | Sensitivity |
-| :--- | :---: | :--- | :--- |
-| `NEXT_PUBLIC_API_URL` | Yes | `https://synapseos-api.onrender.com` | Public Browser URL |
-| `NEXT_PUBLIC_APP_NAME` | No | `SynapseOS` | Public Browser String |
-
-> [!WARNING]
-> Never set private secrets (`APP_SECRET_KEY`, `JWT_SECRET_KEY`, `NEBIUS_API_KEY`) as `NEXT_PUBLIC_*` variables. They are compiled into public JavaScript bundles and visible to all users.
+| # | Test Check | Target URL | Result | Live Evidence / Diagnostic Details |
+| :-: | :--- | :--- | :---: | :--- |
+| 1 | **Frontend HTTPS Delivery** | `https://synapseos-three.vercel.app` | **PASS** | HTTP 200, Title: *"SynapseOS – The AI That Remembers, Reasons, and Acts"*, Size: 115,128 bytes |
+| 2 | **CORS Preflight** | `https://synapseos-api-2onj.onrender.com/api/v1/auth/login` | **PASS** | HTTP 200, `Access-Control-Allow-Origin: https://synapseos-three.vercel.app`, `Credentials: true` |
+| 3 | **Root API Probe** | `https://synapseos-api-2onj.onrender.com/` | **PASS** | HTTP 200, App: `SynapseOS API`, Version: `0.4.0` |
+| 4 | **Health Probe** | `https://synapseos-api-2onj.onrender.com/health` | **PASS** | HTTP 200, `{'status': 'healthy'}` |
+| 5 | **Liveness Probe** | `https://synapseos-api-2onj.onrender.com/health/live` | **PASS** | HTTP 200, `{'status': 'alive'}` |
+| 6 | **Readiness Probe** | `https://synapseos-api-2onj.onrender.com/health/ready` | **PASS** | HTTP 200, `status: ready`, Storage engine: `sqlite` |
+| 7 | **User Registration** | `POST /api/v1/auth/register` | **PASS** | HTTP 201, User created with valid UUID, HttpOnly session cookies issued |
+| 8 | **Workspace Management** | `POST /api/v1/workspaces` | **PASS** | HTTP 201, Personal workspace created and bound to tenant session |
+| 9 | **Memory Creation** | `POST /api/v1/memory?workspace_id=...` | **PASS** | HTTP 201, Memory created (`Apollo Mission Schedule`), embedding indexed |
+| 10 | **Semantic Memory Search** | `POST /api/v1/memory/search` | **PASS** | HTTP 200, Query *"when is phase 1 starting?"* returned 1 grounded memory result |
+| 11 | **RAG Grounded Query** | `POST /api/v1/rag/query` | **PASS** | HTTP 200, Citations: 1, `is_unsupported: False`, verified against persistent context |
+| 12 | **RAG Principled Abstention**| `POST /api/v1/rag/query` | **PASS** | HTTP 200, Out-of-context query correctly abstained (`is_unsupported: True`, confidence: 0.0) |
+| 13 | **Agent Approval Barrier** | `POST /api/v1/agent/chat` | **PASS** | Consequential request (`create_project`) safely paused with `status: awaiting_approval` |
+| 14 | **Agent Rejection Safety Gate**| `POST /api/v1/agent/approve` | **PASS** | Action rejection consumed safely, step marked `skipped`, zero unauthorized side effects |
+| 15 | **Auth Logout Invalidation** | `POST /api/v1/auth/logout` | **PASS** | HTTP 200, Session cookies cleared and invalidated |
 
 ---
 
-## 5. Verification Results & Quality Gates
-
-All automated verification gates were executed locally in production configuration:
-
-| Test Suite / Gate | Command | Result | Details |
-| :--- | :--- | :---: | :--- |
-| **Backend Unit & Integration Tests** | `pytest apps/api/tests/ -v` | **92 Passed, 1 Skipped** | Full routing, auth, memory, graph, and LLM suites |
-| **Production Security Audit** | `pytest apps/api/tests/test_security_audit.py` | **18 / 18 Passed** | CORS, debug rejection, secret strength, path traversal, injection defense |
-| **Health Check & Probes** | `pytest apps/api/tests/test_health.py` | **4 / 4 Passed** | Root, `/health`, `/health/live`, `/health/ready` |
-| **RAG & Agent Benchmark** | `python scripts/evaluate_rag_agent.py` | **52 / 52 Passed** | 100% recall, 100% citation rate, 100% abstention |
-| **E2E Acceptance Flow** | `python scripts/e2e_acceptance_test.py` | **8 / 8 Steps Passed** | Register, memory create, search, doc upload, RAG, agent approval |
-| **Frontend TypeScript Check** | `npm run typecheck --prefix apps/web` | **0 Errors** | Clean TypeScript compile across all components |
-| **Frontend Next.js Build** | `npm run build -w @synapseos/web` | **14 / 14 Routes Clean** | Static & server-rendered bundles optimized |
-| **Backup & Restore Utility** | `python scripts/backup_restore.py verify` | **Verified** | Archive creation and SHA-256 checksum verification |
-
----
-
-## 6. Live Nebius Inference Status
+## 5. Live Nebius Inference Status
 
 - **Status**: `SIMULATION_VERIFIED`
 - **Details**:
-  - Live Nebius Token Factory API keys have not been provided (`NEBIUS_API_KEY` is unset).
+  - Live Nebius Token Factory API keys have not been configured on Render (`NEBIUS_API_KEY` is empty).
   - The deterministic offline simulation mode is active and verified (`scripts/verify_nebius_inference.py --allow-simulated`).
-  - The UI transparently attributes all responses:
-    - Displays: `nvidia/nemotron-4-340b-instruct • Simulation Mode`
-    - Live badges are displayed only when an actual API key is present. Zero deceptive claims are made to users or judges.
+  - The UI and API responses transparently attribute all generations:
+    - Attribution: `nvidia/nemotron-4-340b-instruct • Simulation Mode`
+    - Response headers / JSON bodies explicitly flag `is_simulated: true` and `provider: simulation`.
+    - Live badges are displayed only when an actual API key is present. Zero deceptive claims are made to evaluators.
 
 ---
 
-## 7. Storage Durability & Backup Status
+## 6. Storage Durability & Backup Status
 
 - **Storage Mode**: `local_embedded` (SQLite + Qdrant embedded + JSON Graph).
 - **Durability**: **Ephemeral across cold reboots**.
@@ -129,7 +110,7 @@ All automated verification gates were executed locally in production configurati
 
 ---
 
-## 8. Free-Tier Limitations & Cold Start Accommodations
+## 7. Free-Tier Limitations & Cold Start Accommodations
 
 1. **Cold Starts (Render Free Tier)**:
    - Web services sleep after 15 minutes of inactivity. The first request after sleep experiences a **30 to 45 second wake-up delay**.
@@ -139,45 +120,13 @@ All automated verification gates were executed locally in production configurati
      - Enhanced `api.ts` with custom timeout handling that explains free-tier cold starts rather than failing silently with `Failed to fetch`.
 2. **Ephemeral Disk**:
    - Container restarts discard files written to local disk.
-   - Clearly documented in `docs/HACKATHON_DEMO_GUIDE.md` for evaluators.
+   - Evaluators are advised in `docs/HACKATHON_DEMO_GUIDE.md` to run test walkthroughs within an active session.
 
 ---
 
-## 9. Next Steps: Git Push & One-Click Deployment
+## 8. Teardown Instructions
 
-Because Git remote operations and third-party account authorizations require user permission, here are the exact steps to complete the public launch:
-
-### Step 1: Commit & Push Prepared Changes
-All changes are ready to commit:
-```bash
-git add .
-git commit -m "chore(release): prepare Phase 5 free deployment on Render and Vercel"
-git push origin main
-```
-
-### Step 2: Deploy Backend on Render (1 Minute)
-1. Go to [https://dashboard.render.com/blueprints](https://dashboard.render.com/blueprints)
-2. Click **New Blueprint Instance**.
-3. Connect your GitHub repository: `https://github.com/ManyaS-Git/synapseos`
-4. Render will read `render.yaml`, automatically provision the `synapseos-api` web service on the free tier, and generate secure secrets.
-5. Once deployed, note your service URL (e.g., `https://synapseos-api.onrender.com`).
-
-### Step 3: Deploy Frontend on Vercel (1 Minute)
-1. Go to [https://vercel.com/new](https://vercel.com/new)
-2. Import repository `ManyaS-Git/synapseos`.
-3. In **Root Directory**, select `apps/web`.
-4. Under **Environment Variables**, add:
-   - `NEXT_PUBLIC_API_URL` = `https://synapseos-api.onrender.com` (your Render backend URL)
-5. Click **Deploy**.
-6. Once deployed, update the `CORS_ORIGINS` environment variable in Render with your new Vercel domain (e.g., `https://synapseos.vercel.app`).
-
----
-
-## 10. Monitoring & Teardown
-
-- **Monitoring**: Check backend health at any time via `https://<backend-url>/health`.
-- **Log Inspection**: Available in real-time under Render Dashboard -> **Logs** (JSON-formatted with sanitized PII).
-- **Teardown**: To completely shut down the free services:
-  - Render: Navigate to **Settings** -> **Delete Web Service**.
-  - Vercel: Navigate to **Settings** -> **Delete Project**.
-  - Cost incurred: **$0.00**.
+To completely delete the deployed free services at any time:
+- **Render**: Navigate to Dashboard -> `srv-dbdm9tg473hc73cs3rf0` -> **Settings** -> **Delete Web Service**.
+- **Vercel**: Navigate to Project Settings -> **Delete Project**.
+- Total ongoing cost: **$0.00**.

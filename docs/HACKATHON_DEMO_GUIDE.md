@@ -32,15 +32,18 @@ SynapseOS is a memory-first personal AI environment featuring:
 
 ### Step 1: Open the Application
 Navigate to the live public frontend URL:
-- **Landing Page**: Review the feature overview, privacy architecture, and security model.
-- Click **Launch SynapseOS** or **Get Started**.
+- **Frontend App**: [https://synapseos-three.vercel.app](https://synapseos-three.vercel.app)
+- **Backend API Docs (Swagger)**: [https://synapseos-api-2onj.onrender.com/docs](https://synapseos-api-2onj.onrender.com/docs)
+- **Health Check Probe**: [https://synapseos-api-2onj.onrender.com/health](https://synapseos-api-2onj.onrender.com/health)
+
+Review the landing page overview, privacy architecture, and security model. Click **Launch SynapseOS** or **Get Started**.
 
 ### Step 2: Register a Dedicated Demo Account
 - Click **Sign Up** on the login screen.
 - Enter synthetic demo credentials:
   - **Full Name**: `Judge Demo`
   - **Username**: `judge_demo`
-  - **Email**: `judge@demo.local`
+  - **Email**: `judge@example.com` (or any valid RFC email domain)
   - **Password**: `JudgeDemoPass123!`
 - The system automatically creates a personal workspace and signs you in via secure, HttpOnly session cookies.
 

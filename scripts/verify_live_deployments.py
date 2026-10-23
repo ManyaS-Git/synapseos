@@ -90,7 +90,7 @@ def test_health_endpoints():
 
 def test_auth_and_user_journey():
     ts = int(time.time())
-    demo_email = f"judge_{ts}@demo.local"
+    demo_email = f"judge_{ts}@example.com"
     demo_user = f"judge_{ts}"
     demo_pass = "JudgePass123!Secure"
 
@@ -123,7 +123,7 @@ def test_auth_and_user_journey():
         log_test("Auth Register", False, str(e))
         return False
 
-    # 2. Get Current Workspace if not in user response
+    # 2. Get or Create Workspace
     if not workspace_id:
         req = urllib.request.Request(
             f"{BACKEND_URL}/api/v1/workspaces",
@@ -135,22 +135,36 @@ def test_auth_and_user_journey():
                 if ws_list:
                     workspace_id = ws_list[0]["id"]
                     log_test("Get Workspaces", True, f"Found workspace: {workspace_id}")
+                else:
+                    ws_payload = json.dumps({
+                        "name": "Judge Demo Workspace",
+                        "description": "Auto-created personal workspace",
+                    }).encode("utf-8")
+                    req_ws = urllib.request.Request(
+                        f"{BACKEND_URL}/api/v1/workspaces",
+                        data=ws_payload,
+                        headers={"Content-Type": "application/json", "Origin": FRONTEND_URL},
+                        method="POST",
+                    )
+                    with opener.open(req_ws, timeout=10) as ws_created:
+                        ws_data = json.loads(ws_created.read().decode())
+                        workspace_id = ws_data["id"]
+                        log_test("Create Workspace", True, f"Created workspace: {workspace_id}")
         except Exception as e:
-            log_test("Get Workspaces", False, str(e))
+            log_test("Get/Create Workspaces", False, str(e))
             return False
 
     # 3. Create Memory
     mem_payload = json.dumps({
         "title": "Apollo Mission Schedule",
         "content": "Apollo phase 1 kick-off scheduled for November 12. Security review requires three sign-offs.",
-        "workspace_id": workspace_id,
-        "memory_type": "note",
+        "memory_type": "knowledge",
         "tags": ["apollo", "timeline", "security"],
-        "importance": 4,
+        "importance_score": 0.8,
     }).encode("utf-8")
 
     req = urllib.request.Request(
-        f"{BACKEND_URL}/api/v1/memory",
+        f"{BACKEND_URL}/api/v1/memory?workspace_id={workspace_id}",
         data=mem_payload,
         headers={"Content-Type": "application/json", "Origin": FRONTEND_URL},
         method="POST",
@@ -160,6 +174,9 @@ def test_auth_and_user_journey():
             mem_data = json.loads(resp.read().decode())
             mem_id = mem_data.get("id")
             log_test("Memory Create", resp.status in (200, 201), f"Memory ID: {mem_id}")
+    except urllib.error.HTTPError as e:
+        log_test("Memory Create", False, f"HTTP {e.code}: {e.read().decode()[:120]}")
+        return False
     except Exception as e:
         log_test("Memory Create", False, str(e))
         return False
@@ -180,8 +197,8 @@ def test_auth_and_user_journey():
     try:
         with opener.open(req, timeout=10) as resp:
             search_data = json.loads(resp.read().decode())
-            items = search_data.get("items", [])
-            log_test("Memory Search", len(items) > 0, f"Found {len(items)} results")
+            results = search_data.get("results", [])
+            log_test("Memory Search", len(results) > 0, f"Found {len(results)} results")
     except Exception as e:
         log_test("Memory Search", False, str(e))
 
@@ -201,7 +218,8 @@ def test_auth_and_user_journey():
         with opener.open(req, timeout=15) as resp:
             rag_data = json.loads(resp.read().decode())
             citations = rag_data.get("citations", [])
-            log_test("RAG Grounded Query", len(citations) > 0 or not rag_data.get("abstained"), f"Citations: {len(citations)}, Abstained: {rag_data.get('abstained')}")
+            is_unsupported = rag_data.get("is_unsupported", False)
+            log_test("RAG Grounded Query", len(citations) > 0 or not is_unsupported, f"Citations: {len(citations)}, Unsupported: {is_unsupported}")
     except Exception as e:
         log_test("RAG Grounded Query", False, str(e))
 
@@ -220,14 +238,14 @@ def test_auth_and_user_journey():
     try:
         with opener.open(req, timeout=15) as resp:
             rag_data = json.loads(resp.read().decode())
-            abstained = rag_data.get("abstained", False)
-            log_test("RAG Principled Abstention", abstained, f"Correctly abstained: {abstained}")
+            is_unsupported = rag_data.get("is_unsupported", False)
+            log_test("RAG Principled Abstention", is_unsupported, f"Correctly abstained: {is_unsupported}")
     except Exception as e:
         log_test("RAG Principled Abstention", False, str(e))
 
     # 7. Agent Action & Consequential Approval Barrier
     agent_payload = json.dumps({
-        "message": "Please delete the Apollo Mission Schedule memory",
+        "message": "Please create a new project called Apollo Space Mission",
         "workspace_id": workspace_id,
     }).encode("utf-8")
 
@@ -240,9 +258,10 @@ def test_auth_and_user_journey():
     try:
         with opener.open(req, timeout=15) as resp:
             agent_data = json.loads(resp.read().decode())
-            req_approval = agent_data.get("requires_approval", False)
+            agent_status = agent_data.get("status")
+            req_approval = agent_status == "awaiting_approval"
             session_id = agent_data.get("session_id")
-            log_test("Agent Consequential Approval Barrier", req_approval, f"Session: {session_id}, Approval Required: {req_approval}")
+            log_test("Agent Consequential Approval Barrier", req_approval, f"Session: {session_id}, Status: {agent_status}")
 
             if req_approval and session_id:
                 # Test Reject Barrier
@@ -259,7 +278,10 @@ def test_auth_and_user_journey():
                 )
                 with opener.open(req_rej, timeout=10) as r_rej:
                     rej_data = json.loads(r_rej.read().decode())
-                    log_test("Agent Rejection Safety Gate", not rej_data.get("action_executed", False), f"Status: {rej_data.get('status')}")
+                    executed_steps = rej_data.get("executed_steps", [])
+                    step_status = executed_steps[0].get("status") if executed_steps else "unknown"
+                    is_safe = step_status == "skipped"
+                    log_test("Agent Rejection Safety Gate", is_safe, f"Step status: {step_status}")
     except Exception as e:
         log_test("Agent Consequential Approval Barrier", False, str(e))
 

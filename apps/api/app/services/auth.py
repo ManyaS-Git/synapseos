@@ -77,6 +77,16 @@ class AuthService:
         )
         await self.session.refresh(user)
 
+        # Create default personal workspace
+        from app.services.workspace import WorkspaceService
+        ws_service = WorkspaceService(self.session)
+        ws_name = f"{full_name or username}'s Workspace"
+        await ws_service.create_workspace(
+            user=user,
+            name=ws_name,
+            description="Default personal workspace",
+        )
+
         # Generate tokens
         access_token = create_access_token(user.id)
         refresh_token = create_refresh_token(user.id)
