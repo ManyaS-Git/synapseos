@@ -196,7 +196,12 @@ class AppSettings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        """Async PostgreSQL connection URL."""
+        """Async database connection URL."""
+        if self.storage_mode == "local_embedded":
+            local_dir = self.data_dir
+            os.makedirs(local_dir, exist_ok=True)
+            local_db_path = os.path.join(local_dir, "synapseos_local.db")
+            return f"sqlite+aiosqlite:///{local_db_path}"
         return (
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
@@ -204,7 +209,12 @@ class AppSettings(BaseSettings):
 
     @property
     def database_url_sync(self) -> str:
-        """Synchronous PostgreSQL connection URL (for Alembic)."""
+        """Synchronous database connection URL (for Alembic)."""
+        if self.storage_mode == "local_embedded":
+            local_dir = self.data_dir
+            os.makedirs(local_dir, exist_ok=True)
+            local_db_path = os.path.join(local_dir, "synapseos_local.db")
+            return f"sqlite:///{local_db_path}"
         return (
             f"postgresql://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"

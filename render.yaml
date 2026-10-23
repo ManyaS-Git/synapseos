@@ -24,7 +24,7 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: "https://synapseos-web.vercel.app,https://synapseos.vercel.app,http://localhost:3000"
+        value: "https://synapseos-three.vercel.app,https://synapseos-web.vercel.app,https://synapseos.vercel.app,http://localhost:3000"
       - key: RATE_LIMIT_ENABLED
         value: "true"
       - key: RATE_LIMIT_DEFAULT

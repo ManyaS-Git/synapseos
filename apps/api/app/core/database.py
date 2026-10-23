@@ -81,11 +81,15 @@ class PostgreSQLManager:
                 class_=AsyncSession,
                 expire_on_commit=False,
             )
+            if is_sqlite:
+                from app.models import Base
+                async with self._engine.begin() as conn:
+                    await conn.run_sync(Base.metadata.create_all)
             logger.info("Database connection established")
         except Exception as exc:
-            if settings.is_development or settings.is_testing:
+            if settings.is_development or settings.is_testing or settings.storage_mode in ("local_embedded", "auto"):
                 logger.warning(
-                    "Primary database unavailable in development. Initializing durable local SQLite database fallback.",
+                    "Primary database unavailable. Initializing durable local SQLite database fallback.",
                     error=str(exc),
                 )
                 local_dir = settings.data_dir
