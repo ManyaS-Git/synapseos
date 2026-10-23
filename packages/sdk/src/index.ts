@@ -22,10 +22,13 @@ export class SynapseOS {
 
   /**
    * Check API health.
-   * TODO: Implement
    */
   async health(): Promise<{ status: string }> {
-    const response = await fetch(`${this.apiUrl}/health`);
+    const headers: Record<string, string> = {};
+    if (this.apiKey) {
+      headers["Authorization"] = `Bearer ${this.apiKey}`;
+    }
+    const response = await fetch(`${this.apiUrl}/health`, { headers });
     return response.json();
   }
 }
