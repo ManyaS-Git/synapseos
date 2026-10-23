@@ -20,10 +20,11 @@ import structlog
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.approval_store import approval_store
 from app.agents.tools import TOOL_REGISTRY
 from app.core.config import settings
 from app.core.exceptions import ForbiddenException, NotFoundException
-from app.core.llm import nebius_client
+from app.core.llm import LLMResponse, nebius_client
 from app.models.user import User
 from app.reflection.engine import ReflectionEngine, ReflectionSummary
 from app.services.memory.embedding import embedding_service
@@ -77,6 +78,9 @@ class AgentChatResponse(BaseModel):
     model_used: str
     latency_ms: float
     is_simulated: bool = False
+    is_fallback: bool = False
+    provider: str = "nebius-token-factory"
+    request_id: str | None = None
 
 
 class AgentApprovalRequest(BaseModel):
@@ -116,7 +120,17 @@ class AgentRuntime:
         context_snippets = await self._retrieve_context(req.message, req.workspace_id)
 
         # 2. Generate structured plan using NVIDIA Nemotron
-        plan = await self._generate_plan(req.message, context_snippets)
+        plan, plan_resp = await self._generate_plan(req.message, context_snippets)
+
+        model_used = plan_resp.model if plan_resp else settings.nebius_model
+        is_simulated = plan_resp.is_simulated if plan_resp else True
+        is_fallback = plan_resp.is_fallback if plan_resp else True
+        provider = (
+            plan_resp.provider
+            if plan_resp
+            else ("nebius-token-factory (offline-fallback)" if nebius_client.is_configured else "simulation")
+        )
+        req_id = plan_resp.request_id if plan_resp else None
 
         # 3. Check for consequential steps requiring approval
         has_approval_gate = any(s.requires_approval for s in plan.steps)
@@ -126,7 +140,16 @@ class AgentRuntime:
             pending_step = next(s for s in plan.steps if s.requires_approval)
             pending_step.status = "awaiting_approval"
 
-            # Store pending state
+            # Store pending state durably
+            await approval_store.save_session(
+                session_id=session_id,
+                user_id=str(user.id),
+                workspace_id=str(req.workspace_id),
+                project_id=str(req.project_id) if req.project_id else None,
+                goal=plan.goal,
+                plan=plan.model_dump(),
+                step_index=plan.steps.index(pending_step),
+            )
             PENDING_SESSIONS[session_id] = {
                 "user_id": str(user.id),
                 "workspace_id": str(req.workspace_id),
@@ -149,9 +172,12 @@ class AgentRuntime:
                 pending_step=pending_step,
                 executed_steps=[],
                 reflection=None,
-                model_used=settings.nebius_model,
+                model_used=model_used,
                 latency_ms=round(elapsed_ms, 2),
-                is_simulated=not nebius_client.is_configured,
+                is_simulated=is_simulated,
+                is_fallback=is_fallback,
+                provider=provider,
+                request_id=req_id,
             )
 
         # 4. Execute all authorized tools sequentially
@@ -176,9 +202,12 @@ class AgentRuntime:
             pending_step=None,
             executed_steps=executed_steps,
             reflection=reflection,
-            model_used=settings.nebius_model,
+            model_used=model_used,
             latency_ms=round(elapsed_ms, 2),
-            is_simulated=not nebius_client.is_configured,
+            is_simulated=is_simulated,
+            is_fallback=is_fallback,
+            provider=provider,
+            request_id=req_id,
         )
 
     async def handle_approval(
@@ -188,13 +217,15 @@ class AgentRuntime:
     ) -> AgentChatResponse:
         """Handle user approval or rejection of a pending consequential action."""
         start_time = time.perf_counter()
-        session_data = PENDING_SESSIONS.get(req.session_id)
-
-        if not session_data or session_data.get("workspace_id") != str(req.workspace_id):
-            raise NotFoundException("Pending execution session")
-
-        if session_data.get("user_id") != str(user.id):
-            raise ForbiddenException("You are not authorized to approve this execution session")
+        
+        # Durable approval store validates authorization, TTL, and replay protection
+        session_data = await approval_store.consume_session(
+            session_id=req.session_id,
+            user_id=str(user.id),
+            workspace_id=str(req.workspace_id),
+            approved=req.approved,
+        )
+        PENDING_SESSIONS.pop(req.session_id, None)
 
         plan = AgentPlan.model_validate(session_data["plan"])
         step_idx = session_data["step_index"]
@@ -204,7 +235,6 @@ class AgentRuntime:
             # User rejected the consequential action
             step.status = "skipped"
             step.output = {"message": "User declined execution of this action."}
-            PENDING_SESSIONS.pop(req.session_id, None)
 
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             return AgentChatResponse(
@@ -218,10 +248,11 @@ class AgentRuntime:
                 model_used=settings.nebius_model,
                 latency_ms=round(elapsed_ms, 2),
                 is_simulated=not nebius_client.is_configured,
+                is_fallback=False,
+                provider="nebius-token-factory" if nebius_client.is_configured else "simulation",
             )
 
         # User approved: execute approved step and remaining steps
-        PENDING_SESSIONS.pop(req.session_id, None)
         ctx = {
             "session": self.session,
             "user": user,
@@ -275,6 +306,8 @@ class AgentRuntime:
             model_used=settings.nebius_model,
             latency_ms=round(elapsed_ms, 2),
             is_simulated=not nebius_client.is_configured,
+            is_fallback=False,
+            provider="nebius-token-factory" if nebius_client.is_configured else "simulation",
         )
 
     async def _execute_plan_steps(
@@ -342,7 +375,7 @@ class AgentRuntime:
         except Exception:
             return ""
 
-    async def _generate_plan(self, message: str, context: str) -> AgentPlan:
+    async def _generate_plan(self, message: str, context: str) -> tuple[AgentPlan, LLMResponse | None]:
         """Prompt NVIDIA Nemotron to generate a structured AgentPlan."""
         tool_catalog = [
             f"- {tool.name}: {tool.description} (Requires approval: {tool.is_consequential})"
@@ -373,7 +406,7 @@ class AgentRuntime:
         ]
 
         try:
-            plan, _ = await nebius_client.structured_completion(
+            plan, llm_resp = await nebius_client.structured_completion(
                 messages=messages,
                 response_model=AgentPlan,
             )
@@ -382,13 +415,14 @@ class AgentRuntime:
                 tool = TOOL_REGISTRY.get(s.tool_name)
                 if tool and tool.is_consequential:
                     s.requires_approval = True
-            return plan
-        except Exception:
+            return plan, llm_resp
+        except Exception as e:
+            logger.warning("Agent plan generation via LLM failed, using deterministic fallback", error=str(e))
             # Deterministic fallback plan
             is_project_req = "project" in message.lower() and ("create" in message.lower() or "new" in message.lower())
 
             if is_project_req:
-                return AgentPlan(
+                fallback = AgentPlan(
                     goal=f"Create new project based on request: {message[:60]}",
                     reasoning="The user requested project creation which requires workspace authorization.",
                     steps=[
@@ -402,8 +436,9 @@ class AgentRuntime:
                     ],
                     confidence_score=0.95,
                 )
+                return fallback, None
 
-            return AgentPlan(
+            fallback = AgentPlan(
                 goal=f"Address request: {message[:60]}",
                 reasoning="Process information and record action in workspace memory.",
                 steps=[
@@ -421,3 +456,5 @@ class AgentRuntime:
                 ],
                 confidence_score=0.9,
             )
+            return fallback, None
+

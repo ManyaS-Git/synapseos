@@ -57,6 +57,7 @@ def setup_test_db():
 
     yield
 
+    app.dependency_overrides.pop(get_db, None)
     if test_engine is not None:
         async def _cleanup():
             await test_engine.dispose()

@@ -43,7 +43,7 @@ import {
   useMemoryGraph,
 } from '@/hooks/use-memory'
 import { useAgentChat, useAgentApprove, useRAGQuery } from '@/hooks/use-agent'
-import { memoryApi } from '@/lib/api'
+import { memoryApi, healthApi } from '@/lib/api'
 import type { Memory, GraphNode } from '@/types/memory'
 import type { AgentChatResponse, RAGQueryResponse } from '@/types/agent'
 
@@ -76,6 +76,51 @@ export function SynapseApp({ initialTab = 'Overview' }: SynapseAppProps) {
   const [notice, setNotice] = useState('')
   const [createMemoryOpen, setCreateMemoryOpen] = useState(false)
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null)
+
+  // Backend health & wake-up status for free cloud hosting
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'healthy' | 'waking' | 'offline'>('checking')
+  const [wakeUpNotice, setWakeUpNotice] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+    let timeoutId: NodeJS.Timeout
+
+    const checkBackend = async () => {
+      timeoutId = setTimeout(() => {
+        if (isMounted && backendStatus !== 'healthy') {
+          setBackendStatus('waking')
+          setWakeUpNotice('Connecting to cloud backend... Free-tier hosting may take 30-45 seconds to spin up from sleep.')
+        }
+      }, 3500)
+
+      try {
+        const res = await healthApi.check()
+        clearTimeout(timeoutId)
+        if (isMounted) {
+          if (res?.status === 'healthy') {
+            setBackendStatus('healthy')
+            setWakeUpNotice(null)
+          } else {
+            setBackendStatus('offline')
+          }
+        }
+      } catch {
+        clearTimeout(timeoutId)
+        if (isMounted) {
+          setBackendStatus('waking')
+          setWakeUpNotice('Backend instance is waking up or reconnecting. Please allow ~30 seconds for the free container to initialize.')
+        }
+      }
+    }
+
+    checkBackend()
+    const interval = setInterval(checkBackend, 30000)
+    return () => {
+      isMounted = false
+      clearTimeout(timeoutId)
+      clearInterval(interval)
+    }
+  }, [backendStatus])
 
   // Route protection
   useEffect(() => {
@@ -332,6 +377,25 @@ export function SynapseApp({ initialTab = 'Overview' }: SynapseAppProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Backend connectivity indicator */}
+            <div
+              className="hidden sm:flex items-center gap-1.5 rounded-full border border-border/80 bg-card/60 px-2.5 py-1 text-[11px] text-muted-foreground select-none"
+              title={backendStatus === 'healthy' ? 'Backend API connected and responsive' : 'Backend free instance waking up or connecting'}
+            >
+              <span
+                className={cn(
+                  "size-2 rounded-full transition-colors",
+                  backendStatus === 'healthy' && "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]",
+                  backendStatus === 'waking' && "bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.6)]",
+                  backendStatus === 'offline' && "bg-rose-500",
+                  backendStatus === 'checking' && "bg-muted-foreground animate-ping"
+                )}
+              />
+              <span className="font-medium text-foreground/80">
+                {backendStatus === 'healthy' ? 'API Connected' : backendStatus === 'waking' ? 'Waking API...' : 'API Offline'}
+              </span>
+            </div>
+
             <div className="relative hidden sm:block">
               <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -354,6 +418,31 @@ export function SynapseApp({ initialTab = 'Overview' }: SynapseAppProps) {
 
         {/* View container */}
         <div className="mx-auto max-w-[1400px] p-5 sm:p-8">
+          {wakeUpNotice && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className="flex items-center gap-2">
+                <Loader2 className="size-4 shrink-0 animate-spin text-amber-600 dark:text-amber-400" />
+                <span>{wakeUpNotice}</span>
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await healthApi.check()
+                    if (res?.status === 'healthy') {
+                      setBackendStatus('healthy')
+                      setWakeUpNotice(null)
+                    }
+                  } catch (e) {
+                    void e
+                  }
+                }}
+                className="shrink-0 font-medium underline hover:no-underline"
+              >
+                Check again
+              </button>
+            </div>
+          )}
+
           {notice && (
             <div className="mb-5 flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200">
               <div className="flex items-center gap-2">
@@ -1184,6 +1273,32 @@ function AssistantView({
                         <li key={idx}>{lesson}</li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {/* Inference Transparency & Provider Attribution Badge */}
+                {(msg.agentData || msg.ragData) && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-2 text-[10px] text-muted-foreground">
+                    <span className="font-mono font-medium text-foreground/80">
+                      {msg.agentData?.model_used || msg.ragData?.model_used}
+                    </span>
+                    <span>•</span>
+                    <span>{Math.round(msg.agentData?.latency_ms ?? msg.ragData?.latency_ms ?? 0)}ms</span>
+                    <span>•</span>
+                    {msg.agentData?.is_simulated || msg.ragData?.is_simulated ? (
+                      <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 font-medium text-amber-600 dark:text-amber-400">
+                        Simulation Mode
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
+                        <Sparkles className="size-2.5" /> Live Nebius AI
+                      </span>
+                    )}
+                    {msg.agentData?.is_fallback || msg.ragData?.is_fallback ? (
+                      <span className="inline-flex items-center gap-1 rounded bg-rose-500/10 px-1.5 py-0.5 font-medium text-rose-600 dark:text-rose-400">
+                        Fallback
+                      </span>
+                    ) : null}
                   </div>
                 )}
               </div>

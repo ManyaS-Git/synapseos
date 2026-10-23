@@ -9,7 +9,9 @@ Provides:
 
 from __future__ import annotations
 
+import json
 import math
+import os
 import uuid
 from typing import Any
 
@@ -44,15 +46,47 @@ def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     return max(0.0, min(1.0, dot / (norm_a * norm_b)))
 
 
+LOCAL_VECTOR_PATH = os.path.join(settings.data_dir, "local_vector_store.json")
+
+
 class VectorStore:
-    """Manages vector storage in Qdrant with local fallback."""
+    """Manages vector storage in Qdrant with durable local fallback."""
 
     # Shared memory storage across instances when Qdrant is offline
     _memory_vectors: dict[str, dict[str, Any]] = {}
 
+    @classmethod
+    def _load_local_store(cls) -> None:
+        """Load persisted local vectors from disk if in-memory store is empty."""
+        if not cls._memory_vectors and os.path.exists(LOCAL_VECTOR_PATH):
+            try:
+                with open(LOCAL_VECTOR_PATH, "r", encoding="utf-8") as f:
+                    cls._memory_vectors = json.load(f)
+                logger.info("Loaded persisted local vector store", count=len(cls._memory_vectors))
+            except Exception as e:
+                logger.warning("Failed to load local vector store from disk", error=str(e))
+
+    @classmethod
+    def _save_local_store(cls) -> None:
+        """Persist in-memory vectors to local disk store."""
+        try:
+            os.makedirs(os.path.dirname(LOCAL_VECTOR_PATH), exist_ok=True)
+            tmp_path = f"{LOCAL_VECTOR_PATH}.tmp"
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(cls._memory_vectors, f)
+            if os.path.exists(LOCAL_VECTOR_PATH):
+                try:
+                    os.remove(LOCAL_VECTOR_PATH)
+                except Exception:
+                    pass
+            os.rename(tmp_path, LOCAL_VECTOR_PATH)
+        except Exception as e:
+            logger.warning("Failed to save local vector store to disk", error=str(e))
+
     def __init__(self, client: AsyncQdrantClient | None = None):
         self._client = client
         self._dimensions = 768  # Default for nomic-embed-text
+        self._load_local_store()
 
     @property
     def client(self) -> AsyncQdrantClient:
@@ -94,6 +128,7 @@ class VectorStore:
             "payload": p,
         }
 
+        self._save_local_store()
         try:
             point = PointStruct(id=vector_id, vector=embedding, payload=p)
             await self.client.upsert(
@@ -114,6 +149,7 @@ class VectorStore:
                 "vector": v["vector"],
                 "payload": v.get("payload", {}),
             }
+        self._save_local_store()
 
         try:
             points = [
@@ -146,6 +182,7 @@ class VectorStore:
             "vector": new_vec,
             "payload": new_payload,
         }
+        self._save_local_store()
 
         try:
             if embedding is not None and metadata is not None:
@@ -166,6 +203,7 @@ class VectorStore:
     async def delete(self, vector_id: str) -> None:
         """Delete a single vector."""
         self._memory_vectors.pop(vector_id, None)
+        self._save_local_store()
         try:
             await self.client.delete(
                 collection_name=COLLECTION_NAME,
@@ -178,6 +216,7 @@ class VectorStore:
         """Delete multiple vectors."""
         for vid in vector_ids:
             self._memory_vectors.pop(vid, None)
+        self._save_local_store()
         try:
             if vector_ids:
                 await self.client.delete(
@@ -189,6 +228,7 @@ class VectorStore:
 
     async def get(self, vector_id: str) -> dict | None:
         """Retrieve a vector by ID."""
+        self._load_local_store()
         try:
             results = await self.client.retrieve(
                 collection_name=COLLECTION_NAME,
@@ -244,6 +284,7 @@ class VectorStore:
             logger.debug("Qdrant search unavailable, using local vector search", error=str(e))
 
         # In-memory cosine search fallback
+        self._load_local_store()
         scored = []
         for vid, entry in self._memory_vectors.items():
             payload = entry.get("payload", {})

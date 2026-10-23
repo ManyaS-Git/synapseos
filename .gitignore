@@ -50,12 +50,16 @@ temp/
 # Database
 *.db
 *.sqlite3
+data/
 
 # Jupyter
 .ipynb_checkpoints/
 
 # TypeScript
 *.tsbuildinfo
+
+# Backups
+backups/
 
 # Misc
 *.local

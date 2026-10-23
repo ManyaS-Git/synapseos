@@ -4,12 +4,18 @@ Loads settings from environment variables and .env files.
 Validates all required configuration at startup.
 """
 
+from __future__ import annotations
+
+import os
 from enum import Enum
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 
 
 class Environment(str, Enum):
@@ -23,6 +29,8 @@ class Environment(str, Enum):
 
 class AppSettings(BaseSettings):
     """Application-level settings."""
+
+    data_dir: str = Field(default=DATA_DIR, description="Directory for persistent data")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -40,9 +48,14 @@ class AppSettings(BaseSettings):
         description="Secret key for signing",
     )
     app_log_level: str = Field(default="INFO", description="Logging level")
+    enable_docs_in_production: bool = Field(default=False, description="Enable /docs and /redoc in production")
+    storage_mode: str = Field(
+        default="auto",
+        description="Storage mode: 'auto' (detect services, fallback to local), 'local_embedded', or 'distributed'",
+    )
 
     # CORS
-    cors_origins: list[str] = Field(
+    cors_origins: list[str] | str = Field(
         default=["http://localhost:3000", "http://localhost:8000"],
         description="Allowed CORS origins",
     )
@@ -120,6 +133,66 @@ class AppSettings(BaseSettings):
     def warn_default_password(cls, v: str, info: object) -> str:  # noqa: ARG001
         """Warn if default passwords are used in production."""
         return v
+
+    @field_validator("cors_origins")
+    @classmethod
+    def assemble_cors_origins(cls, v: object) -> list[str]:
+        """Support comma-separated strings or JSON lists for CORS origins."""
+        if isinstance(v, str):
+            v_str = v.strip()
+            if v_str.startswith("[") and v_str.endswith("]"):
+                import json
+                try:
+                    parsed = json.loads(v_str)
+                    if isinstance(parsed, list):
+                        return [str(x).strip() for x in parsed if str(x).strip()]
+                except Exception:
+                    pass
+            return [i.strip() for i in v_str.split(",") if i.strip()]
+        if isinstance(v, (list, tuple)):
+            return [str(x).strip() for x in v if str(x).strip()]
+        return ["http://localhost:3000"]
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> AppSettings:
+        """Validate critical security invariants when running in production."""
+        if self.app_env == Environment.PRODUCTION:
+            if self.app_debug:
+                raise ValueError("app_debug must be set to False in production mode.")
+
+            insecure_app_secrets = {
+                "change-me-in-production",
+                "change-me-to-a-random-secret-key",
+                "secret",
+                "admin",
+                "synapseos",
+                "password",
+            }
+            if self.app_secret_key in insecure_app_secrets or len(self.app_secret_key) < 16:
+                raise ValueError(
+                    "In production, app_secret_key must not use a default placeholder and must be at least 16 characters long."
+                )
+
+            insecure_jwt_secrets = {
+                "change-me-to-jwt-secret",
+                "change-me-to-a-random-jwt-secret",
+                "secret",
+                "admin",
+                "synapseos",
+                "password",
+            }
+            if self.jwt_secret_key in insecure_jwt_secrets or len(self.jwt_secret_key) < 16:
+                raise ValueError(
+                    "In production, jwt_secret_key must not use a default placeholder and must be at least 16 characters long."
+                )
+
+            if "*" in self.cors_origins:
+                raise ValueError(
+                    "In production, cors_origins must not contain wildcard '*' when allow_credentials is True."
+                )
+
+        return self
+
 
     @property
     def database_url(self) -> str:

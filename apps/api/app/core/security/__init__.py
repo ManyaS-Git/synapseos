@@ -85,11 +85,11 @@ async def get_current_user(
 
     Raises 401 if the cookie is missing, invalid, or the user doesn't exist.
     """
-    token = request.cookies.get(settings.jwt_cookie_name)
-    if not token:
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header[7:].strip()
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+    else:
+        token = request.cookies.get(settings.jwt_cookie_name)
 
     if not token:
         raise HTTPException(

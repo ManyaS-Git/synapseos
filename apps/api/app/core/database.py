@@ -10,6 +10,7 @@ No repositories or business logic — connection management only.
 
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -58,20 +59,52 @@ class PostgreSQLManager:
 
     async def connect(self) -> None:
         """Create the async engine and session factory."""
-        logger.info("Connecting to PostgreSQL", host=settings.postgres_host, port=settings.postgres_port)
-        self._engine = create_async_engine(
-            settings.database_url,
-            echo=settings.app_debug,
-            pool_size=5,
-            max_overflow=10,
-            pool_pre_ping=True,
-        )
-        self._session_factory = async_sessionmaker(
-            bind=self._engine,
-            class_=AsyncSession,
-            expire_on_commit=False,
-        )
-        logger.info("PostgreSQL connection established")
+        db_url = settings.database_url
+        is_sqlite = "sqlite" in db_url
+
+        engine_kwargs: dict[str, Any] = {"echo": settings.app_debug}
+        if not is_sqlite:
+            engine_kwargs.update({
+                "pool_size": 5,
+                "max_overflow": 10,
+                "pool_pre_ping": True,
+            })
+
+        try:
+            logger.info("Connecting to database", host=settings.postgres_host if not is_sqlite else "local", is_sqlite=is_sqlite)
+            engine = create_async_engine(db_url, **engine_kwargs)
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+            self._engine = engine
+            self._session_factory = async_sessionmaker(
+                bind=self._engine,
+                class_=AsyncSession,
+                expire_on_commit=False,
+            )
+            logger.info("Database connection established")
+        except Exception as exc:
+            if settings.is_development or settings.is_testing:
+                logger.warning(
+                    "Primary database unavailable in development. Initializing durable local SQLite database fallback.",
+                    error=str(exc),
+                )
+                local_dir = settings.data_dir
+                os.makedirs(local_dir, exist_ok=True)
+                local_db_path = os.path.join(local_dir, "synapseos_local.db")
+                fallback_url = f"sqlite+aiosqlite:///{local_db_path}"
+
+                self._engine = create_async_engine(fallback_url, echo=settings.app_debug)
+                self._session_factory = async_sessionmaker(
+                    bind=self._engine,
+                    class_=AsyncSession,
+                    expire_on_commit=False,
+                )
+                from app.models import Base
+                async with self._engine.begin() as conn:
+                    await conn.run_sync(Base.metadata.create_all)
+                logger.info("Local SQLite database fallback initialized and schema verified", path=local_db_path)
+            else:
+                raise
 
     async def disconnect(self) -> None:
         """Dispose the engine and close all connections."""
@@ -90,8 +123,13 @@ class PostgreSQLManager:
                 result = await conn.execute(
                     text("SELECT 1")
                 )
-                result.scalar()
-            return {"status": "healthy", "host": settings.postgres_host, "port": settings.postgres_port}
+            is_sqlite = "sqlite" in str(self._engine.url)
+            return {
+                "status": "healthy",
+                "engine": "sqlite" if is_sqlite else "postgresql",
+                "host": "local" if is_sqlite else settings.postgres_host,
+                "port": None if is_sqlite else settings.postgres_port,
+            }
         except Exception as exc:
             return {"status": "unhealthy", "error": str(exc)}
 
@@ -119,13 +157,24 @@ class RedisManager:
     async def connect(self) -> None:
         """Initialize the async Redis client."""
         logger.info("Connecting to Redis", host=settings.redis_host, port=settings.redis_port)
-        self._client = aioredis.from_url(
-            settings.redis_url,
-            encoding="utf-8",
-            decode_responses=True,
-        )
-        await self._client.ping()
-        logger.info("Redis connection established")
+        client = None
+        try:
+            client = aioredis.from_url(
+                settings.redis_url,
+                encoding="utf-8",
+                decode_responses=True,
+            )
+            await client.ping()
+            self._client = client
+            logger.info("Redis connection established")
+        except Exception:
+            self._client = None
+            if client:
+                try:
+                    await client.aclose()
+                except Exception:
+                    pass
+            raise
 
     async def disconnect(self) -> None:
         """Close the Redis client."""
@@ -168,12 +217,23 @@ class Neo4jManager:
     async def connect(self) -> None:
         """Create the async Neo4j driver."""
         logger.info("Connecting to Neo4j", uri=settings.neo4j_uri)
-        self._driver = AsyncGraphDatabase.driver(
-            settings.neo4j_uri,
-            auth=(settings.neo4j_user, settings.neo4j_password),
-        )
-        await self._driver.verify_connectivity()
-        logger.info("Neo4j connection established")
+        driver = None
+        try:
+            driver = AsyncGraphDatabase.driver(
+                settings.neo4j_uri,
+                auth=(settings.neo4j_user, settings.neo4j_password),
+            )
+            await driver.verify_connectivity()
+            self._driver = driver
+            logger.info("Neo4j connection established")
+        except Exception:
+            self._driver = None
+            if driver:
+                try:
+                    await driver.close()
+                except Exception:
+                    pass
+            raise
 
     async def disconnect(self) -> None:
         """Close the Neo4j driver."""
@@ -219,12 +279,23 @@ class QdrantManager:
     async def connect(self) -> None:
         """Initialize the async Qdrant client."""
         logger.info("Connecting to Qdrant", host=settings.qdrant_host, port=settings.qdrant_port)
-        self._client = AsyncQdrantClient(
-            host=settings.qdrant_host,
-            port=settings.qdrant_port,
-        )
-        await self._client.get_collections()
-        logger.info("Qdrant connection established")
+        client = None
+        try:
+            client = AsyncQdrantClient(
+                host=settings.qdrant_host,
+                port=settings.qdrant_port,
+            )
+            await client.get_collections()
+            self._client = client
+            logger.info("Qdrant connection established")
+        except Exception:
+            self._client = None
+            if client:
+                try:
+                    await client.close()
+                except Exception:
+                    pass
+            raise
 
     async def disconnect(self) -> None:
         """Close the Qdrant client."""
@@ -254,6 +325,8 @@ qdrant_manager = QdrantManager()
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency that yields a database session."""
+    if postgres._session_factory is None:
+        await postgres.connect()
     async with postgres.session_factory() as session:
         try:
             yield session

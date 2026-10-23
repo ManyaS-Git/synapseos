@@ -35,14 +35,24 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE}${path}`;
-  const res = await fetch(url, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    const msg = (err as Error)?.message || "";
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("network")) {
+      throw new ApiError(0, "Backend service is waking up or temporarily unavailable. On free-tier cloud hosting, cold starts can take 30-45 seconds. Please wait a moment and retry.");
+    }
+    throw err;
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: "Request failed" }));
@@ -52,6 +62,13 @@ async function request<T>(
   if (res.status === 204) return undefined as T;
   return res.json();
 }
+
+/* ── Health ───────────────────────────────────────────────────────── */
+
+export const healthApi = {
+  check: () => request<{ status: string; name?: string }>("/health"),
+  ready: () => request<{ status: string; services?: Record<string, unknown> }>("/health/ready"),
+};
 
 /* ── Auth ─────────────────────────────────────────────────────────── */
 

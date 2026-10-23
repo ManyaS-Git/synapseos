@@ -42,6 +42,10 @@ export interface AgentChatResponse {
   reflection?: ReflectionSummary | null;
   model_used: string;
   latency_ms: number;
+  is_simulated?: boolean;
+  is_fallback?: boolean;
+  provider?: string;
+  request_id?: string | null;
 }
 
 export interface AgentApprovalRequest {
@@ -79,6 +83,9 @@ export interface RAGQueryResponse {
   model_used: string;
   latency_ms: number;
   provider: string;
+  is_simulated?: boolean;
+  is_fallback?: boolean;
+  request_id?: string | null;
 }
 
 export interface AgentToolInfo {

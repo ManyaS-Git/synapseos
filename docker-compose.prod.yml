@@ -1,0 +1,254 @@
+# =============================================================================
+# SynapseOS — Production Docker Compose
+# =============================================================================
+# Profiles:
+#   1. Standalone / Embedded Beta (Recommended for Private Beta Single-Machine):
+#      docker compose -f docker-compose.prod.yml --profile standalone up -d
+#      Uses durable local SQLite, vector store, and graph store in a persistent volume.
+#      Zero external dependencies required (no Redis, Neo4j, Qdrant, or Postgres needed).
+#
+#   2. Distributed (Enterprise / Multi-Service Stack):
+#      docker compose -f docker-compose.prod.yml --profile distributed up -d
+#      Launches PostgreSQL 16, Redis 7, Neo4j 5, and Qdrant 1.10.
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # Backend API — Standalone Single-Machine Mode (Profile: standalone)
+  # ===========================================================================
+  api-standalone:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    image: synapseos/api:0.4.0
+    container_name: synapseos-api-standalone
+    profiles:
+      - standalone
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      - APP_NAME=SynapseOS
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_SECRET_KEY=${APP_SECRET_KEY:?APP_SECRET_KEY must be set in production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set in production}
+      - APP_LOG_LEVEL=${APP_LOG_LEVEL:-INFO}
+      - STORAGE_MODE=local_embedded
+      - ENABLE_DOCS_IN_PRODUCTION=${ENABLE_DOCS_IN_PRODUCTION:-false}
+      - NEBIUS_API_KEY=${NEBIUS_API_KEY:-}
+      - NEBIUS_BASE_URL=${NEBIUS_BASE_URL:-https://api.tokenfactory.nebius.com/v1}
+      - NEBIUS_MODEL=${NEBIUS_MODEL:-nvidia/Llama-3.1-Nemotron-70B-Instruct-HF}
+      - PRIVACY_MODE=${PRIVACY_MODE:-hybrid}
+    volumes:
+      - synapseos_data:/app/data
+      - synapseos_logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - synapseos-prod
+
+  # ===========================================================================
+  # Frontend Web App — Standalone Mode (Profile: standalone)
+  # ===========================================================================
+  web-standalone:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: synapseos/web:0.4.0
+    container_name: synapseos-web-standalone
+    profiles:
+      - standalone
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-ws://localhost:8000/ws}
+    depends_on:
+      api-standalone:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - synapseos-prod
+
+  # ===========================================================================
+  # Distributed Infrastructure (Profile: distributed)
+  # ===========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: synapseos-postgres
+    profiles:
+      - distributed
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-synapseos}
+      POSTGRES_USER: ${POSTGRES_USER:-synapseos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be configured in distributed mode}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-synapseos} -d ${POSTGRES_DB:-synapseos}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - synapseos-prod
+
+  redis:
+    image: redis:7-alpine
+    container_name: synapseos-redis
+    profiles:
+      - distributed
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-}"
+    volumes:
+      - redis_prod_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - synapseos-prod
+
+  neo4j:
+    image: neo4j:5-community
+    container_name: synapseos-neo4j
+    profiles:
+      - distributed
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:?NEO4J_PASSWORD must be set}
+      NEO4J_PLUGINS: '["apoc"]'
+    volumes:
+      - neo4j_prod_data:/data
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "${NEO4J_USER:-neo4j}", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - synapseos-prod
+
+  qdrant:
+    image: qdrant/qdrant:v1.10.0
+    container_name: synapseos-qdrant
+    profiles:
+      - distributed
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - qdrant_prod_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - synapseos-prod
+
+  api-distributed:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    image: synapseos/api:0.4.0
+    container_name: synapseos-api-distributed
+    profiles:
+      - distributed
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      - APP_NAME=SynapseOS
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_SECRET_KEY=${APP_SECRET_KEY:?APP_SECRET_KEY must be set in production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set in production}
+      - APP_LOG_LEVEL=${APP_LOG_LEVEL:-INFO}
+      - STORAGE_MODE=distributed
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-synapseos}
+      - POSTGRES_USER=${POSTGRES_USER:-synapseos}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=${NEO4J_USER:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - NEBIUS_API_KEY=${NEBIUS_API_KEY:-}
+      - PRIVACY_MODE=${PRIVACY_MODE:-hybrid}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - synapseos-prod
+
+  # ===========================================================================
+  # Frontend Web App — Distributed Mode (Profile: distributed)
+  # ===========================================================================
+  web-distributed:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: synapseos/web:0.4.0
+    container_name: synapseos-web-distributed
+    profiles:
+      - distributed
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-ws://localhost:8000/ws}
+    depends_on:
+      api-distributed:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - synapseos-prod
+
+
+# =============================================================================
+# Volumes & Networks
+# =============================================================================
+volumes:
+  synapseos_data:
+  synapseos_logs:
+  postgres_prod_data:
+  redis_prod_data:
+  neo4j_prod_data:
+  qdrant_prod_data:
+
+networks:
+  synapseos-prod:
+    driver: bridge

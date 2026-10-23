@@ -11,6 +11,8 @@ Provides:
 
 from __future__ import annotations
 
+import json
+import os
 import uuid
 from typing import Any
 
@@ -21,16 +23,53 @@ from app.core.config import settings
 
 logger = structlog.get_logger("synapseos.graph")
 
+LOCAL_GRAPH_PATH = os.path.join(settings.data_dir, "local_graph_store.json")
+
 
 class GraphService:
-    """Manages the knowledge graph in Neo4j with local fallback."""
+    """Manages the knowledge graph in Neo4j with durable local fallback."""
 
     # Shared in-memory graph across instances when Neo4j is offline
     _nodes: dict[str, dict[str, Any]] = {}
     _relationships: list[dict[str, Any]] = []
 
+    @classmethod
+    def _load_local_store(cls) -> None:
+        """Load persisted local graph from disk if in-memory store is empty."""
+        if not cls._nodes and not cls._relationships and os.path.exists(LOCAL_GRAPH_PATH):
+            try:
+                with open(LOCAL_GRAPH_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    cls._nodes = data.get("nodes", {})
+                    cls._relationships = data.get("relationships", [])
+                logger.info(
+                    "Loaded persisted local graph store",
+                    nodes=len(cls._nodes),
+                    relationships=len(cls._relationships),
+                )
+            except Exception as e:
+                logger.warning("Failed to load local graph store from disk", error=str(e))
+
+    @classmethod
+    def _save_local_store(cls) -> None:
+        """Persist in-memory graph to local disk store."""
+        try:
+            os.makedirs(os.path.dirname(LOCAL_GRAPH_PATH), exist_ok=True)
+            tmp_path = f"{LOCAL_GRAPH_PATH}.tmp"
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump({"nodes": cls._nodes, "relationships": cls._relationships}, f)
+            if os.path.exists(LOCAL_GRAPH_PATH):
+                try:
+                    os.remove(LOCAL_GRAPH_PATH)
+                except Exception:
+                    pass
+            os.rename(tmp_path, LOCAL_GRAPH_PATH)
+        except Exception as e:
+            logger.warning("Failed to save local graph store to disk", error=str(e))
+
     def __init__(self, driver: AsyncDriver | None = None):
         self._driver = driver
+        self._load_local_store()
 
     @property
     def driver(self) -> AsyncDriver:
@@ -52,6 +91,7 @@ class GraphService:
 
         # Always maintain in memory store
         self._nodes[node_id] = props
+        self._save_local_store()
 
         try:
             query = f"""
@@ -78,6 +118,7 @@ class GraphService:
         """Update a node's properties."""
         if node_id in self._nodes:
             self._nodes[node_id].update(properties)
+            self._save_local_store()
 
         try:
             query = f"""
@@ -103,6 +144,7 @@ class GraphService:
             r for r in self._relationships
             if r["source_id"] != node_id and r["target_id"] != node_id
         ]
+        self._save_local_store()
 
         try:
             query = """
@@ -136,6 +178,7 @@ class GraphService:
             "properties": props,
         }
         self._relationships.append(rel_dict)
+        self._save_local_store()
 
         try:
             query = f"""
@@ -169,6 +212,7 @@ class GraphService:
             r for r in self._relationships
             if not (r["source_id"] == source_id and r["target_id"] == target_id and r["type"] == relationship_type)
         ]
+        self._save_local_store()
         deleted = len(self._relationships) < orig_len
 
         try:

@@ -25,10 +25,11 @@ router = APIRouter(tags=["health"])
 @router.get("/")
 async def root() -> dict[str, str]:
     """Root endpoint — confirms the API is running."""
+    docs_path = "/docs" if (not settings.is_production or settings.enable_docs_in_production) else "disabled"
     return {
         "name": "SynapseOS API",
-        "version": "0.1.0",
-        "docs": "/docs",
+        "version": "0.4.0",
+        "docs": docs_path,
         "status": "running",
     }
 
@@ -53,54 +54,67 @@ async def liveness() -> dict[str, str]:
 async def readiness() -> JSONResponse:
     """Kubernetes-style readiness probe.
 
-    Checks connectivity to all downstream services:
-    - PostgreSQL
-    - Redis
-    - Neo4j
-    - Qdrant
-    - Ollama (soft check — fails don't block readiness)
+    Checks connectivity to downstream services:
+    - Primary database (PostgreSQL or durable SQLite fallback)
+    - Redis (cache & message broker)
+    - Neo4j (graph database)
+    - Qdrant (vector store)
+    - Ollama (soft check)
+    - Nebius Token Factory
 
-    Returns 200 only if critical services are reachable.
-    Returns 503 if critical services are down.
+    In local/embedded or auto mode, a healthy primary database and local fallback
+    guarantees ready status (HTTP 200). In distributed mode, all critical services
+    must be healthy.
     """
     start = time.perf_counter()
 
     services: dict[str, dict[str, object]] = {}
-    all_healthy = True
 
-    # Critical services — failure means not ready
     for name, manager in [
         ("postgres", postgres),
         ("redis", redis_manager),
         ("neo4j", neo4j_manager),
         ("qdrant", qdrant_manager),
     ]:
-        result = await manager.health_check()
-        services[name] = result
-        if result.get("status") not in ("healthy", "unavailable"):
-            all_healthy = False
-        elif result.get("status") == "unavailable":
-            # Engine not initialized is allowed (app started without DB)
-            pass
+        services[name] = await manager.health_check()
 
-    # Non-critical — Ollama may not be running
-    ollama_result = await ollama_manager.health_check()
-    services["ollama"] = ollama_result
+    # Soft checks (non-blocking)
+    services["ollama"] = await ollama_manager.health_check()
 
-    # Nebius Token Factory / NVIDIA Nemotron status
+    # Nebius Token Factory provider status
     from app.core.llm.nebius import nebius_client
-    nebius_health = await nebius_client.health_check()
-    services["nebius_token_factory"] = nebius_health
+    services["nebius_token_factory"] = await nebius_client.health_check()
+
+    # Determine readiness based on storage mode
+    db_healthy = services["postgres"].get("status") == "healthy"
+    any_unhealthy = any(
+        s.get("status") == "unhealthy"
+        for k, s in services.items()
+        if k in ("postgres", "redis", "neo4j", "qdrant")
+    )
+
+    if settings.storage_mode == "distributed":
+        # Distributed mode requires all 4 core services to be healthy
+        is_ready = db_healthy and all(
+            services[k].get("status") == "healthy"
+            for k in ("postgres", "redis", "neo4j", "qdrant")
+        )
+    else:
+        # local_embedded or auto: primary db must be healthy and no connected service in failure state
+        is_ready = db_healthy and not any_unhealthy
 
     elapsed_ms = (time.perf_counter() - start) * 1000
 
     response: dict[str, object] = {
-        "status": "ready" if all_healthy else "degraded",
+        "status": "ready" if is_ready else "degraded",
         "environment": settings.app_env.value,
-        "version": "0.1.0",
+        "version": "0.4.0",
+        "storage_mode": settings.storage_mode,
+        "privacy_mode": settings.privacy_mode,
         "services": services,
         "check_duration_ms": round(elapsed_ms, 2),
     }
 
-    status_code = 200 if all_healthy else 503
+    status_code = 200 if is_ready else 503
     return JSONResponse(content=response, status_code=status_code)
+

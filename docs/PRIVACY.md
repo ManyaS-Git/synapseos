@@ -1,7 +1,7 @@
 # SynapseOS Privacy & Data Governance Architecture
 
-**Version**: 0.2.0  
-**Last Updated**: 2026-10-21  
+**Version**: 0.4.0 (Phase 4 — Private Beta)  
+**Last Updated**: 2026-10-22  
 
 SynapseOS is engineered from first principles around **user data ownership, transparency, and minimal external exposure**. This document outlines our data lifecycle, privacy boundaries, logging policies, and external transmission disclosures.
 
@@ -29,14 +29,15 @@ SynapseOS stores:
 
 ## 2. Where Data Is Stored
 
-| Data Category | Primary Storage | Storage Location | Encryption / Isolation |
-|:--------------|:----------------|:-----------------|:-----------------------|
-| **Auth & Metadata** | PostgreSQL 16 | Local container or host disk | Row-level tenant isolation by `workspace_id` |
-| **Vector Index** | Qdrant | Local container or host memory | Collection-level namespacing by workspace |
-| **Knowledge Graph** | Neo4j 5.x | Local container or host memory | Node property labeling by `workspace_id` |
-| **Session Cache** | Redis 7.x | Local container or host memory | Ephemeral key TTLs with workspace prefix |
+| Data Category | Standalone / Beta Storage | Distributed Storage | Storage Location | Encryption / Isolation |
+|:--------------|:--------------------------|:--------------------|:-----------------|:-----------------------|
+| **Auth & Metadata** | SQLite (`synapseos_local.db`) | PostgreSQL 16 | Local volume or disk | Row-level tenant isolation by `workspace_id` |
+| **Vector Index** | Local JSON index (`local_vector_store.json`) | Qdrant 1.10 | Local volume or disk | Workspace-scoped filtering in vector queries |
+| **Knowledge Graph** | Local JSON graph (`local_graph_store.json`) | Neo4j 5.x | Local volume or disk | Node property labeling by `workspace_id` |
+| **Session & Approvals** | Durable JSON (`approval_sessions.json`) | Redis 7.x | Local volume or disk | Ephemeral key TTLs (900s) + replay protection |
 
-By default, in both Docker and standalone local installations, **all four databases reside entirely on the user's host infrastructure**.
+By default, in both Docker and standalone local installations, **all persistent databases reside entirely on the user's host infrastructure**.
+
 
 ---
 
@@ -44,32 +45,38 @@ By default, in both Docker and standalone local installations, **all four databa
 
 SynapseOS supports three explicit inference routing modes (configurable in `.env` and `/settings`):
 
-### Mode 1: Local-First (Offline / Air-Gapped)
-- **Embedding Generation**: Local Ollama or local deterministic semantic tokenizer.
-- **Reasoning & Planning**: Local Ollama instance (`llama3.2` or quantized edge models).
-- **External Network Egress**: **Zero bytes**. No prompts, documents, or metadata leave your local machine.
+### Mode 1: Local-First (Offline / Air-Gapped) — `PRIVACY_MODE=local_only`
+- **Embedding Generation**: Local deterministic semantic tokenizer / embedding model.
+- **Reasoning & Planning**: Local deterministic simulation or local edge runner.
+- **External Network Egress**: **Strictly Zero Bytes**. Even if an API key is configured in the environment, `NebiusNemotronClient` intercepts all outbound requests and executes local simulation. No packets leave the machine.
 
-### Mode 2: Hybrid Cloud (Default Hackathon Mode)
-- **Persistent Storage**: 100% Local (PostgreSQL, Qdrant, Neo4j).
-- **Embedding Generation**: Local.
-- **Inference & RAG Synthesis**: Server-side request to **Nebius Token Factory** (`https://api.tokenfactory.nebius.com/v1/`) running `nvidia/nemotron-4-340b-instruct`.
-- **Egress Boundary**: Only the user prompt, retrieved context snippets relevant to that specific question, and tool descriptions are transmitted over TLS 1.3 to Nebius Token Factory for inference.
+### Mode 2: Hybrid Privacy (Default / Beta Ready) — `PRIVACY_MODE=hybrid`
+- **Important Disclosure**: **Hybrid mode is NOT fully local.** In hybrid mode, specific data is transmitted to Nebius Token Factory over encrypted TLS 1.3.
+- **Persistent Storage**: 100% Local (PostgreSQL/SQLite, local vector store, local knowledge graph).
+- **Embedding Generation**: Local (embeddings are generated on-device, never transmitted).
+- **Inference & RAG Synthesis**: Server-side HTTPS POST to `https://api.tokenfactory.nebius.com/v1/chat/completions` running `nvidia/nemotron-4-340b-instruct`.
+- **Egress Boundary**:
+  - **Transmitted to Nebius**: The user's prompt query, system prompt instructions, and top $K$ retrieved memory excerpts (scoped strictly to the user's authorized workspace).
+  - **Never Transmitted**: Database credentials, passwords, JWT secrets, Nebius API keys, full documents, or memories from outside the active workspace.
+- **Pre-Retrieval Authorization**: The backend validates workspace membership (`WorkspaceRepository.is_member`) *before* executing vector search or prompt assembly, guaranteeing that cross-workspace data can never reach external model context.
 
-### Mode 3: Cloud Accelerated
-- Nebius GPU clusters process high-throughput agent loops and embeddings.
+### Mode 3: Cloud Accelerated — `PRIVACY_MODE=cloud_only`
+- Unbounded cloud inference with cloud-hosted vector indexes and remote embeddings. (Currently marked as non-default / beta optional).
 
 ---
 
-## 4. Client-Side Sanitization & Zero Prompt Logging
+## 4. Privacy-First Observability & Zero Key Leakage
 
-To protect sensitive information when external cloud inference is enabled:
-1. **Zero Prompt Logging**:
-   - `NebiusNemotronClient` explicitly excludes raw user prompts, private document contents, and completion bodies from application logs.
-   - Server logs record only non-sensitive telemetry: HTTP status code, request duration in milliseconds, token counts, and model identifier.
-2. **Client-Side Redaction**:
-   - Configurable regex filters redact API keys, JWT tokens, credentials, and common PII patterns before payload construction.
-3. **No Training on User Data**:
-   - Nebius Token Factory endpoints operate under enterprise zero-data retention agreements; inference requests are not used to train public models.
+To preserve strict privacy standards while maintaining operational visibility:
+1. **Server-Side Credential Containment**:
+   - `NEBIUS_API_KEY` is loaded exclusively on the backend into memory. It is never exposed in frontend bundles, HTML, local storage, API responses, or error messages.
+   - Any API error string matching the key pattern is sanitized to `[REDACTED_API_KEY]`.
+2. **Zero Prompt Telemetry**:
+   - `LLMTelemetryManager` records only non-content operational telemetry: request ID, model identifier, provider name, latency in milliseconds, prompt tokens, completion tokens, retry attempts, and HTTP status codes.
+   - User prompt content, document text, and completion text are strictly excluded from telemetry stores and logs.
+3. **Transparent Provider Attribution**:
+   - Every assistant and RAG response returned to the client includes explicit metadata flags: `is_simulated`, `is_fallback`, `provider`, and `model_used`.
+   - The frontend renders an explicit badge distinguishing "Live Nebius AI" from "Simulation Mode" or "Fallback", ensuring simulated answers can never be mistaken for real model inference.
 
 ---
 
@@ -78,14 +85,15 @@ To protect sensitive information when external cloud inference is enabled:
 1. **Soft Deletion**:
    - Calling `DELETE /api/v1/memory/{id}` marks the memory status as `ARCHIVED` or `DELETED`, instantly removing it from active RAG retrieval, vector search results, and agent context.
 2. **Hard Purging**:
-   - Database cascading rules remove associated vectors from Qdrant and relationship nodes from Neo4j upon physical deletion.
+   - Database cascading rules remove associated vectors from the local index and relationship nodes from the graph upon physical deletion.
 3. **Approval Sessions**:
-   - Consequential action approval sessions in `PENDING_SESSIONS` expire automatically after 10 minutes and are wiped from memory.
+   - Consequential action approval sessions in `approval_store` expire automatically after 10 minutes (TTL enforced) and are wiped upon consumption or rejection.
 
 ---
 
 ## 6. Known Limitations & What Is NOT Currently Guaranteed
 
-- **Multi-Tenant Public Hosting**: In the current version, workspace isolation is enforced logically at the application and query layer (`workspace_id` filtering in SQLAlchemy). Physical database separation per tenant is not implemented.
-- **End-to-End Client Encryption**: Data at rest in PostgreSQL and Qdrant is unencrypted unless underlying host volume encryption (e.g., BitLocker, LUKS) is enabled by the administrator.
-- **Air-Gapped Cloud Mode**: Hybrid mode requires outbound internet connectivity to `api.tokenfactory.nebius.com`. If you require 100% air-gapped security, you must select **Local-First Only** in Settings.
+- **Multi-Tenant Public Hosting**: Workspace isolation is enforced logically at the application and query layer (`workspace_id` filtering in SQLAlchemy). Physical database separation per tenant is not implemented.
+- **End-to-End Client Encryption**: Data at rest in SQLite/PostgreSQL is unencrypted unless underlying host volume encryption (e.g., BitLocker, LUKS) is enabled by the administrator.
+- **Air-Gapped Cloud Mode**: Hybrid mode requires outbound internet connectivity to `api.tokenfactory.nebius.com`. If you require 100% air-gapped security, you must set `PRIVACY_MODE=local_only` in `.env`.
+

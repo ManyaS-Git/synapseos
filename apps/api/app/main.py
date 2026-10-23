@@ -28,7 +28,8 @@ from app.routers.v1 import router as v1_router
 
 logger = structlog.get_logger("synapseos.app")
 
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.4.0"
+DOCS_ENABLED = not settings.is_production or settings.enable_docs_in_production
 
 
 @asynccontextmanager
@@ -92,7 +93,7 @@ async def lifespan(app: FastAPI):
         env=settings.app_env.value,
         host="0.0.0.0",
         port=8000,
-        docs="/docs",
+        docs="/docs" if DOCS_ENABLED else "disabled",
         services_connected=services_connected,
         services_failed=services_failed,
         startup_ms=round(elapsed_ms, 2),
@@ -123,8 +124,8 @@ def create_app() -> FastAPI:
         title="SynapseOS API",
         description="A Privacy-First AI Operating System — Backend API",
         version=APP_VERSION,
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url="/docs" if DOCS_ENABLED else None,
+        redoc_url="/redoc" if DOCS_ENABLED else None,
         lifespan=lifespan,
     )
 

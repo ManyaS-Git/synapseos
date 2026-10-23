@@ -201,6 +201,9 @@ class MemoryRepository:
 
     async def increment_access(self, memory: Memory) -> None:
         """Increment the access count and update accessed_at."""
+        now = datetime.now(timezone.utc)
         memory.access_count += 1
-        memory.accessed_at = datetime.now(timezone.utc)
+        memory.accessed_at = now
+        memory.updated_at = now
         await self.session.flush()
+        await self.session.refresh(memory)

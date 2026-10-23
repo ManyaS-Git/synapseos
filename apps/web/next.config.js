@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: process.env.VERCEL ? undefined : 'standalone',
   transpilePackages: ['@synapseos/ui', '@synapseos/types', '@synapseos/shared'],
   experimental: {
     serverActions: {

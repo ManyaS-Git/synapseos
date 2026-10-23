@@ -12,6 +12,7 @@ import logging
 import logging.handlers
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -124,16 +125,16 @@ def setup_logging(
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """Middleware that logs every HTTP request with timing and status."""
+    """Middleware that logs every HTTP request with timing, security headers, and request ID correlation."""
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Any:
-        """Process request, log timing, and return response."""
+        """Process request, log timing, and return response with security headers."""
         logger = structlog.get_logger("synapseos.http")
         start_time = time.perf_counter()
 
-        request_id = request.headers.get("X-Request-ID", "")
+        request_id = request.headers.get("X-Request-ID") or f"req-{uuid.uuid4().hex[:12]}"
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(
             request_id=request_id,
@@ -155,6 +156,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         )
 
         response.headers["X-Process-Time"] = f"{duration_ms:.2f}"
+        response.headers["X-Request-ID"] = request_id
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         return response
 
 
@@ -165,9 +171,11 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        """Handle uncaught exceptions with structured logging."""
+        """Handle uncaught exceptions with structured logging and correlated request ID."""
+        request_id = request.headers.get("X-Request-ID") or f"req-{uuid.uuid4().hex[:12]}"
         logger.error(
             "Unhandled exception",
+            request_id=request_id,
             path=request.url.path,
             method=request.method,
             error_type=type(exc).__name__,
@@ -179,6 +187,12 @@ def register_error_handlers(app: FastAPI) -> None:
             content={
                 "detail": "Internal server error",
                 "status": 500,
+                "request_id": request_id,
+            },
+            headers={
+                "X-Request-ID": request_id,
+                "X-Content-Type-Options": "nosniff",
+                "X-Frame-Options": "DENY",
             },
         )
 
@@ -190,6 +204,10 @@ def register_error_handlers(app: FastAPI) -> None:
             content={
                 "detail": "Not found",
                 "status": 404,
+            },
+            headers={
+                "X-Content-Type-Options": "nosniff",
+                "X-Frame-Options": "DENY",
             },
         )
 

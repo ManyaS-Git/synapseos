@@ -118,6 +118,8 @@ async def upload_document(
             reader = pypdf.PdfReader(io.BytesIO(content_bytes))
             if len(reader.pages) == 0:
                 raise HTTPException(status_code=400, detail="PDF has no pages")
+            if len(reader.pages) > 100:
+                raise HTTPException(status_code=400, detail="PDF exceeds maximum allowed limit of 100 pages")
             pages_text = []
             for i, page in enumerate(reader.pages):
                 extracted = page.extract_text()
@@ -172,11 +174,12 @@ async def upload_document(
     if not text_content:
         raise HTTPException(status_code=400, detail="File contains no extractable text content")
 
-    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if isinstance(tags, str) and tags else []
     if ext not in tag_list:
         tag_list.append(ext)
 
-    clean_title = filename.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
+    from pathlib import Path as FilePath
+    clean_title = FilePath(filename).name.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
 
     service = MemoryService(db)
     memory = await service.create_memory(
@@ -267,16 +270,22 @@ async def get_project_memories(
     db: AsyncSession = Depends(get_db),
 ) -> list:
     """Get all memories for a specific project."""
+    from app.repositories.project import ProjectRepository
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
     service = MemoryService(db)
-    # We need workspace_id for access check, get it from first memory
     memories, _ = await service.list_memories(
-        workspace_id=uuid.UUID(int=0),  # placeholder
+        workspace_id=project.workspace_id,
         user=current_user,
         project_id=project_id,
         page=1,
         page_size=1000,
     )
     return [_memory_to_response(m) for m in memories]
+
 
 
 @router.get("/graph", response_model=GraphResponse)
