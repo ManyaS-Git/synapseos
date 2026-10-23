@@ -1,7 +1,8 @@
-# SynapseOS Phase 5 — Deployment & Hackathon Release Report
+# SynapseOS Phase 5.1 — Deployment & Hackathon Release Report
 
 **Date**: 2026-10-23  
-**Status**: `DEPLOYED_WITH_LIMITATIONS` / `READY_FOR_PUBLIC_RELEASE`  
+**Status**: `BLOCKED` (Awaiting User OAuth/MFA Dashboard Authorization)  
+**Latest Git Release Commit**: `3735c18` on `origin/main`  
 **Release Manager**: Autonomous Senior DevOps & Release Engineering Agent  
 
 ---
@@ -10,10 +11,10 @@
 
 | Component | Target Free-Tier Host | Public URL / Deployment Target | Status |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | **Vercel** (Hobby Plan) | `https://synapseos.vercel.app` (or generated project URL) | Production bundle compiled (14/14 routes clean) |
-| **Backend API** | **Render** (Free Web Service) | `https://synapseos-api.onrender.com` | Blueprint prepared (`render.yaml`), startup verified |
-| **API Docs (Swagger)** | Render | `https://synapseos-api.onrender.com/docs` | Enabled in demo mode via `ENABLE_DOCS_IN_PRODUCTION=true` |
-| **Health Probe** | Render | `https://synapseos-api.onrender.com/health` | Responsive 200 OK probe endpoint |
+| **Frontend** | **Vercel** (Hobby Plan) | *Pending User Vercel Import* (`apps/web`) | Production bundle compiled (14/14 routes clean) |
+| **Backend API** | **Render** (Free Web Service) | *Pending User Render Blueprint* (`render.yaml`) | Blueprint verified, Python 3.12 startup verified |
+| **API Docs (Swagger)** | Render | `https://<render-service>.onrender.com/docs` | Enabled in demo mode via `ENABLE_DOCS_IN_PRODUCTION=true` |
+| **Health Probe** | Render | `https://<render-service>.onrender.com/health` | Responsive 200 OK probe endpoint |
 
 ---
 
