@@ -3,12 +3,16 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+
 const navLinks = [
   { name: "Features", href: "#features" },
   { name: "How it works", href: "#how-it-works" },
   { name: "Developers", href: "#developers" },
   { name: "Pricing", href: "#pricing" },
 ];
+
+const isClerkConfigured = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -64,15 +68,42 @@ export function Navigation() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <a href="/login" className={`text-foreground/70 hover:text-foreground transition-all duration-500 ${isScrolled ? "text-xs" : "text-sm"}`}>
-              Sign in
-            </a>
-            <a
-              href="/register"
-              className={`bg-foreground hover:bg-foreground/90 text-background rounded-full transition-all duration-500 inline-flex items-center justify-center font-medium ${isScrolled ? "px-4 h-8 text-xs" : "px-6 h-9 text-sm"}`}
-            >
-              Launch OS
-            </a>
+            {isClerkConfigured ? (
+              <>
+                <SignedIn>
+                  <a
+                    href="/dashboard"
+                    className={`bg-foreground hover:bg-foreground/90 text-background rounded-full transition-all duration-500 inline-flex items-center justify-center font-medium ${isScrolled ? "px-4 h-8 text-xs" : "px-6 h-9 text-sm"}`}
+                  >
+                    Dashboard
+                  </a>
+                  <UserButton afterSignOutUrl="/" />
+                </SignedIn>
+                <SignedOut>
+                  <a href="/login" className={`text-foreground/70 hover:text-foreground transition-all duration-500 ${isScrolled ? "text-xs" : "text-sm"}`}>
+                    Sign in
+                  </a>
+                  <a
+                    href="/register"
+                    className={`bg-foreground hover:bg-foreground/90 text-background rounded-full transition-all duration-500 inline-flex items-center justify-center font-medium ${isScrolled ? "px-4 h-8 text-xs" : "px-6 h-9 text-sm"}`}
+                  >
+                    Launch OS
+                  </a>
+                </SignedOut>
+              </>
+            ) : (
+              <>
+                <a href="/login" className={`text-foreground/70 hover:text-foreground transition-all duration-500 ${isScrolled ? "text-xs" : "text-sm"}`}>
+                  Sign in
+                </a>
+                <a
+                  href="/register"
+                  className={`bg-foreground hover:bg-foreground/90 text-background rounded-full transition-all duration-500 inline-flex items-center justify-center font-medium ${isScrolled ? "px-4 h-8 text-xs" : "px-6 h-9 text-sm"}`}
+                >
+                  Launch OS
+                </a>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -128,20 +159,57 @@ export function Navigation() {
           }`}
           style={{ transitionDelay: isMobileMenuOpen ? "300ms" : "0ms" }}
           >
-            <a 
-              href="/login"
-              className="flex-1 rounded-full h-14 text-base border border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center justify-center font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Sign in
-            </a>
-            <a 
-              href="/register"
-              className="flex-1 bg-foreground text-background rounded-full h-14 text-base inline-flex items-center justify-center font-medium hover:bg-foreground/90"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Launch OS
-            </a>
+            {isClerkConfigured ? (
+              <>
+                <SignedIn>
+                  <div className="flex items-center justify-between w-full">
+                    <a 
+                      href="/dashboard"
+                      className="flex-1 bg-foreground text-background rounded-full h-14 text-base inline-flex items-center justify-center font-medium hover:bg-foreground/90 mr-4"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Open Dashboard
+                    </a>
+                    <div className="flex items-center justify-center p-2">
+                      <UserButton afterSignOutUrl="/" />
+                    </div>
+                  </div>
+                </SignedIn>
+                <SignedOut>
+                  <a 
+                    href="/login"
+                    className="flex-1 rounded-full h-14 text-base border border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center justify-center font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Sign in
+                  </a>
+                  <a 
+                    href="/register"
+                    className="flex-1 bg-foreground text-background rounded-full h-14 text-base inline-flex items-center justify-center font-medium hover:bg-foreground/90"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Launch OS
+                  </a>
+                </SignedOut>
+              </>
+            ) : (
+              <>
+                <a 
+                  href="/login"
+                  className="flex-1 rounded-full h-14 text-base border border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center justify-center font-medium"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Sign in
+                </a>
+                <a 
+                  href="/register"
+                  className="flex-1 bg-foreground text-background rounded-full h-14 text-base inline-flex items-center justify-center font-medium hover:bg-foreground/90"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Launch OS
+                </a>
+              </>
+            )}
           </div>
         </div>
       </div>
