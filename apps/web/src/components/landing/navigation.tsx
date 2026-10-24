@@ -12,7 +12,10 @@ const navLinks = [
   { name: "Pricing", href: "#pricing" },
 ];
 
-const isClerkConfigured = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+const isClerkConfigured = Boolean(
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  "pk_test_dHJ1c3R5LW11bGxldC0zMzEwLmNsZXJrLmFjY291bnRzLmRldiQ"
+);
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);

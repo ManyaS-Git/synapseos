@@ -7,7 +7,10 @@ import Link from "next/link";
 import { SignUp } from "@clerk/nextjs";
 import { useRegister } from "@/hooks/use-auth";
 
-const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const publishableKey =
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  "pk_test_dHJ1c3R5LW11bGxldC0zMzEwLmNsZXJrLmFjY291bnRzLmRldiQ";
+const isClerkConfigured = !!publishableKey;
 
 export default function RegisterPage() {
   const [form, setForm] = useState({

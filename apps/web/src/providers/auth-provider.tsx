@@ -6,7 +6,9 @@ import React, { useEffect } from "react";
 import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/nextjs";
 import { setClerkTokenGetter } from "@/lib/api";
 
-const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
+const publishableKey =
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  "pk_test_dHJ1c3R5LW11bGxldC0zMzEwLmNsZXJrLmFjY291bnRzLmRldiQ";
 const isClerkConfigured = !!publishableKey;
 
 function ClerkAuthBridge({ children }: { children: React.ReactNode }) {
