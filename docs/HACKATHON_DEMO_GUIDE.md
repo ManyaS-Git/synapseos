@@ -121,6 +121,6 @@ For technical judges evaluating code quality, security posture, and system archi
 | **Principled Abstention** | `VERIFIED` | Threshold guard returns explicit abstention message when evidence is missing. |
 | **Agent Multi-Step Planner** | `VERIFIED` | Pydantic schema validation (`AgentPlan`, `AgentStep`) with reflection generation. |
 | **Human-in-the-Loop Barrier** | `VERIFIED` | Consequential action approval sessions with 900s TTL and replay prevention. |
-| **Live Nebius Inference** | `SIMULATION_VERIFIED` | Deterministic simulation fallback active. Live provider call unconfigured in free deployment. |
+| **Live Nebius Inference** | `SIMULATION_VERIFIED` | Zero-cost deterministic simulation verified on live deployment. Free credits exhausted; zero-cost constraint strictly preserved. |
 | **Storage Durability** | `EPHEMERAL` | Render free tier discards ephemeral disk files on cold reboot. $0 ongoing cost. |
 | **Document Formats** | `VERIFIED` | `.txt`, `.md`, `.json`, `.csv`, and text-extractable `.pdf`. (Scanned OCR rejected with 400). |

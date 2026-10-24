@@ -1,6 +1,6 @@
-# SynapseOS Feature Status Specification (Phase 6 Final Release)
+# SynapseOS Feature Status Specification (Phase 7 Final Release)
 
-**Last Updated:** Phase 6 — Final Hackathon Hardening, AI Validation & Release Audit  
+**Last Updated:** Phase 7 — Live Nebius AI Inference Verification & Final Release Audit  
 **Version:** `0.4.0`  
 **Architecture:** FastAPI Backend + Next.js 14 Frontend + NVIDIA Nemotron via Nebius Token Factory  
 
@@ -28,8 +28,8 @@ This document provides a transparent, evidence-based breakdown of all capabiliti
 | Feature / Subsystem | Status | Implementation File | Verification Evidence |
 | :--- | :--- | :--- | :--- |
 | **Nebius Token Factory Client** | `VERIFIED` | `apps/api/app/core/llm/nebius.py` | Unit test suite `apps/api/tests/test_nebius.py` (14 passing tests, 1 skipped). |
-| **Live Remote Nebius Inference** | `BLOCKED` | `apps/api/app/core/llm/nebius.py` | `scripts/verify_nebius_inference.py` reports `[STATUS: BLOCKED]` when credentials unconfigured. Unit tests verify 200 OK, 401 auth, 404 model, 429 rate limit with mocks. |
-| **Deterministic Simulation Fallback** | `SIMULATION_VERIFIED` | `apps/api/app/core/llm/nebius.py` | Verified via `python scripts/verify_nebius_inference.py --allow-simulated` returning `[STATUS: SIMULATION_VERIFIED]`. Zero-network offline execution. |
+| **Live Remote Nebius Inference** | `BLOCKED` | `apps/api/app/core/llm/nebius.py` | Promotional credits confirmed unavailable/exhausted; zero-cost policy enforced. Live inference blocked without payment details. Unit tests verify 200 OK, 401 auth, 404 model, 429 rate limit with mocks. |
+| **Deterministic Simulation Fallback** | `SIMULATION_VERIFIED` | `apps/api/app/core/llm/nebius.py` | Actively verified via `python scripts/verify_nebius_inference.py --remote-url https://synapseos-api-2onj.onrender.com --allow-simulated` returning `[STATUS: SIMULATION_VERIFIED]`. Zero-cost offline execution. |
 | **Hybrid Privacy Egress Guard** | `VERIFIED` | `apps/api/app/core/llm/nebius.py` | `PRIVACY_MODE=local_only` strictly blocks external egress. Verified in `test_nebius_privacy_mode_local_only_blocks_egress`. |
 | **No API Key Leakage Protection** | `VERIFIED` | `apps/api/app/core/llm/nebius.py` | `[REDACTED_API_KEY]` sanitization verified in `test_nebius_no_api_key_leakage_in_error_message`. |
 | **Bounded Transient Retries** | `VERIFIED` | `apps/api/app/core/llm/nebius.py` | Retries on 429 and timeouts with exponential backoff; immediately aborts on 400/401/403/404. Verified in `test_nebius.py`. |

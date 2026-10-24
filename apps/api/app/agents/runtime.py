@@ -122,13 +122,13 @@ class AgentRuntime:
         # 2. Generate structured plan using NVIDIA Nemotron
         plan, plan_resp = await self._generate_plan(req.message, context_snippets)
 
-        model_used = plan_resp.model if plan_resp else settings.nebius_model
+        model_used = plan_resp.model if plan_resp else (f"{settings.nebius_model}-fallback" if nebius_client.is_configured else f"{settings.nebius_model}-simulated")
         is_simulated = plan_resp.is_simulated if plan_resp else True
-        is_fallback = plan_resp.is_fallback if plan_resp else True
+        is_fallback = plan_resp.is_fallback if plan_resp else bool(nebius_client.is_configured)
         provider = (
             plan_resp.provider
             if plan_resp
-            else ("nebius-token-factory (offline-fallback)" if nebius_client.is_configured else "simulation")
+            else ("nebius-token-factory (fallback)" if nebius_client.is_configured else "nebius-token-factory (simulated)")
         )
         req_id = plan_resp.request_id if plan_resp else None
 
@@ -245,11 +245,11 @@ class AgentRuntime:
                 pending_step=None,
                 executed_steps=[step],
                 reflection=None,
-                model_used=settings.nebius_model,
+                model_used=settings.nebius_model if nebius_client.is_configured else f"{settings.nebius_model}-simulated",
                 latency_ms=round(elapsed_ms, 2),
                 is_simulated=not nebius_client.is_configured,
                 is_fallback=False,
-                provider="nebius-token-factory" if nebius_client.is_configured else "simulation",
+                provider="nebius-token-factory" if nebius_client.is_configured else "nebius-token-factory (simulated)",
             )
 
         # User approved: execute approved step and remaining steps
@@ -303,11 +303,11 @@ class AgentRuntime:
             pending_step=None,
             executed_steps=plan.steps,
             reflection=reflection,
-            model_used=settings.nebius_model,
+            model_used=settings.nebius_model if nebius_client.is_configured else f"{settings.nebius_model}-simulated",
             latency_ms=round(elapsed_ms, 2),
             is_simulated=not nebius_client.is_configured,
             is_fallback=False,
-            provider="nebius-token-factory" if nebius_client.is_configured else "simulation",
+            provider="nebius-token-factory" if nebius_client.is_configured else "nebius-token-factory (simulated)",
         )
 
     async def _execute_plan_steps(

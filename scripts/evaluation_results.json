@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-23T15:08:32Z",
+  "timestamp": "2026-10-24T09:21:47Z",
   "total_test_cases": 52,
   "metrics": {
     "retrieval_recall_percent": 100.0,
@@ -21,7 +21,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 449.12,
+      "latency_ms": 488.67,
       "notes": "Satisfied rubric"
     },
     {
@@ -32,7 +32,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 569.54,
+      "latency_ms": 544.36,
       "notes": "Satisfied rubric"
     },
     {
@@ -43,7 +43,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 557.58,
+      "latency_ms": 589.6,
       "notes": "Satisfied rubric"
     },
     {
@@ -54,7 +54,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 556.73,
+      "latency_ms": 611.35,
       "notes": "Satisfied rubric"
     },
     {
@@ -65,7 +65,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 548.89,
+      "latency_ms": 586.7,
       "notes": "Satisfied rubric"
     },
     {
@@ -76,7 +76,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 550.97,
+      "latency_ms": 565.34,
       "notes": "Satisfied rubric"
     },
     {
@@ -87,7 +87,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 547.47,
+      "latency_ms": 579.45,
       "notes": "Satisfied rubric"
     },
     {
@@ -98,7 +98,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 653.58,
+      "latency_ms": 571.22,
       "notes": "Satisfied rubric"
     },
     {
@@ -109,7 +109,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 574.85,
+      "latency_ms": 623.79,
       "notes": "Satisfied rubric"
     },
     {
@@ -120,7 +120,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 577.47,
+      "latency_ms": 554.64,
       "notes": "Satisfied rubric"
     },
     {
@@ -131,7 +131,7 @@
       "status": "PASS",
       "citations_count": 2,
       "is_unsupported": false,
-      "latency_ms": 556.58,
+      "latency_ms": 581.18,
       "notes": "Satisfied rubric"
     },
     {
@@ -142,7 +142,7 @@
       "status": "PASS",
       "citations_count": 3,
       "is_unsupported": false,
-      "latency_ms": 599.47,
+      "latency_ms": 563.79,
       "notes": "Satisfied rubric"
     },
     {
@@ -153,7 +153,7 @@
       "status": "PASS",
       "citations_count": 2,
       "is_unsupported": false,
-      "latency_ms": 566.61,
+      "latency_ms": 574.45,
       "notes": "Satisfied rubric"
     },
     {
@@ -164,7 +164,7 @@
       "status": "PASS",
       "citations_count": 2,
       "is_unsupported": false,
-      "latency_ms": 567.6,
+      "latency_ms": 588.32,
       "notes": "Satisfied rubric"
     },
     {
@@ -175,7 +175,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 577.22,
+      "latency_ms": 577.24,
       "notes": "Satisfied rubric"
     },
     {
@@ -186,7 +186,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 557.36,
+      "latency_ms": 572.47,
       "notes": "Satisfied rubric"
     },
     {
@@ -197,7 +197,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 562.83,
+      "latency_ms": 574.77,
       "notes": "Satisfied rubric"
     },
     {
@@ -208,7 +208,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 568.81,
+      "latency_ms": 577.1,
       "notes": "Satisfied rubric"
     },
     {
@@ -219,7 +219,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 560.14,
+      "latency_ms": 620.31,
       "notes": "Satisfied rubric"
     },
     {
@@ -230,7 +230,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 571.11,
+      "latency_ms": 561.55,
       "notes": "Satisfied rubric"
     },
     {
@@ -241,7 +241,7 @@
       "status": "PASS",
       "citations_count": 0,
       "is_unsupported": true,
-      "latency_ms": 579.79,
+      "latency_ms": 577.86,
       "notes": "Satisfied rubric"
     },
     {
@@ -252,7 +252,7 @@
       "status": "PASS",
       "citations_count": 0,
       "is_unsupported": true,
-      "latency_ms": 546.99,
+      "latency_ms": 576.29,
       "notes": "Satisfied rubric"
     },
     {
@@ -263,7 +263,7 @@
       "status": "PASS",
       "citations_count": 0,
       "is_unsupported": true,
-      "latency_ms": 559.66,
+      "latency_ms": 573.1,
       "notes": "Satisfied rubric"
     },
     {
@@ -274,7 +274,7 @@
       "status": "PASS",
       "citations_count": 0,
       "is_unsupported": true,
-      "latency_ms": 580.05,
+      "latency_ms": 573.61,
       "notes": "Satisfied rubric"
     },
     {
@@ -285,7 +285,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": true,
-      "latency_ms": 561.17,
+      "latency_ms": 566.87,
       "notes": "Satisfied rubric"
     },
     {
@@ -296,7 +296,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": true,
-      "latency_ms": 596.3,
+      "latency_ms": 587.16,
       "notes": "Satisfied rubric"
     },
     {
@@ -307,7 +307,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": true,
-      "latency_ms": 572.88,
+      "latency_ms": 582.77,
       "notes": "Satisfied rubric"
     },
     {
@@ -318,7 +318,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": true,
-      "latency_ms": 551.54,
+      "latency_ms": 623.53,
       "notes": "Satisfied rubric"
     },
     {
@@ -329,7 +329,7 @@
       "status": "PASS",
       "citations_count": 0,
       "is_unsupported": true,
-      "latency_ms": 565.04,
+      "latency_ms": 607.11,
       "notes": "Satisfied rubric"
     },
     {
@@ -340,7 +340,7 @@
       "status": "PASS",
       "citations_count": 2,
       "is_unsupported": false,
-      "latency_ms": 621.36,
+      "latency_ms": 569.11,
       "notes": "Satisfied rubric"
     },
     {
@@ -351,7 +351,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 563.55,
+      "latency_ms": 575.95,
       "notes": "Satisfied rubric"
     },
     {
@@ -362,7 +362,7 @@
       "status": "PASS",
       "citations_count": 2,
       "is_unsupported": false,
-      "latency_ms": 562.24,
+      "latency_ms": 575.13,
       "notes": "Satisfied rubric"
     },
     {
@@ -373,7 +373,7 @@
       "status": "PASS",
       "citations_count": 2,
       "is_unsupported": false,
-      "latency_ms": 578.25,
+      "latency_ms": 655.28,
       "notes": "Satisfied rubric"
     },
     {
@@ -402,7 +402,7 @@
       "status": "PASS",
       "citations_count": 0,
       "is_unsupported": true,
-      "latency_ms": 588.92,
+      "latency_ms": 590.12,
       "notes": "Satisfied rubric"
     },
     {
@@ -413,7 +413,7 @@
       "status": "PASS",
       "citations_count": 0,
       "is_unsupported": true,
-      "latency_ms": 533.51,
+      "latency_ms": 652.08,
       "notes": "Satisfied rubric"
     },
     {
@@ -424,7 +424,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 560.02,
+      "latency_ms": 550.54,
       "notes": "Satisfied rubric"
     },
     {
@@ -435,7 +435,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 563.5,
+      "latency_ms": 600.73,
       "notes": "Satisfied rubric"
     },
     {
@@ -446,7 +446,7 @@
       "status": "PASS",
       "citations_count": 0,
       "is_unsupported": true,
-      "latency_ms": 562.92,
+      "latency_ms": 578.78,
       "notes": "Satisfied rubric"
     },
     {
@@ -457,7 +457,7 @@
       "status": "PASS",
       "citations_count": 0,
       "is_unsupported": true,
-      "latency_ms": 563.41,
+      "latency_ms": 587.57,
       "notes": "Satisfied rubric"
     },
     {
@@ -468,7 +468,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": true,
-      "latency_ms": 572.06,
+      "latency_ms": 574.22,
       "notes": "Satisfied rubric"
     },
     {
@@ -479,7 +479,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": true,
-      "latency_ms": 574.08,
+      "latency_ms": 583.9,
       "notes": "Satisfied rubric"
     },
     {
@@ -490,7 +490,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": true,
-      "latency_ms": 562.39,
+      "latency_ms": 574.09,
       "notes": "Satisfied rubric"
     },
     {
@@ -501,7 +501,7 @@
       "status": "FAIL",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 550.85,
+      "latency_ms": 558.86,
       "notes": "Expected abstention but model answered"
     },
     {
@@ -512,7 +512,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 564.33,
+      "latency_ms": 575.93,
       "notes": "Satisfied rubric"
     },
     {
@@ -523,7 +523,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 563.06,
+      "latency_ms": 587.87,
       "notes": "Satisfied rubric"
     },
     {
@@ -534,7 +534,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 571.24,
+      "latency_ms": 589.77,
       "notes": "Satisfied rubric"
     },
     {
@@ -545,7 +545,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 624.63,
+      "latency_ms": 572.76,
       "notes": "Satisfied rubric"
     },
     {
@@ -556,7 +556,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 564.42,
+      "latency_ms": 611.2,
       "notes": "Satisfied rubric"
     },
     {
@@ -567,7 +567,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 577.18,
+      "latency_ms": 555.79,
       "notes": "Satisfied rubric"
     },
     {
@@ -578,7 +578,7 @@
       "status": "PASS",
       "citations_count": 1,
       "is_unsupported": false,
-      "latency_ms": 561.96,
+      "latency_ms": 585.21,
       "notes": "Satisfied rubric"
     }
   ],
@@ -588,9 +588,9 @@
       "consequential_approval_gated": true,
       "human_confirmation_executed": true,
       "human_rejection_aborted": true,
-      "safe_latency_ms": 2369.4,
-      "consequential_latency_ms": 573.62,
-      "approval_latency_ms": 45.17
+      "safe_latency_ms": 2441.12,
+      "consequential_latency_ms": 614.67,
+      "approval_latency_ms": 48.32
     }
   ],
   "environment": {

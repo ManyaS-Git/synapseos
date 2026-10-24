@@ -125,6 +125,43 @@ The 10-step flagship demo journey was validated over the public Internet:
 
 ## 8. Git Release & Synchronization
 
-- **Latest Commit**: `f4d8cca` pushed to `origin/main`.
+- **Pre-Phase 7 Base Commit**: `1c44644` (and follow-up alignment `a652e27`).
 - **Branch**: `main` (clean, synchronized with remote).
 - **Total Release Files Verified**: 5 docs, 8 test suites, 14 web routes.
+
+---
+
+## 9. Phase 7 — Live Nebius AI Evaluation & Final Release Verification
+
+**Date**: 2026-10-24  
+**Evaluator**: Antigravity Autonomous Systems & AI Infrastructure Engineer  
+**Status**: **`SIMULATION_VERIFIED`** (Zero-Cost Hackathon Release)
+
+### 9.1 Inference Provider & Credit Audit
+- **Target Provider**: Nebius Token Factory (OpenAI-compatible `/v1/chat/completions`).
+- **Target Model**: `nvidia/Llama-3.1-Nemotron-70B-Instruct-HF`.
+- **Credit & Billing Investigation**:
+  - The live Nebius Token Factory console (`https://tokenfactory.nebius.com/`) was inspected.
+  - Existing promotional credits were confirmed exhausted / unavailable without adding credit card billing details.
+  - **Zero-Cost Constraint Enforcement**: In strict compliance with the zero-cost mandate, no billing details were entered, no paid infrastructure was activated, and no billable API calls were dispatched.
+- **Inference Verification CLI**:
+  - Executed `scripts/verify_nebius_inference.py --remote-url https://synapseos-api-2onj.onrender.com --allow-simulated`.
+  - Result: `[STATUS: SIMULATION_VERIFIED]` (HTTP 200, 302.9ms roundtrip, citations: 1).
+  - Deployed `/health/ready` probe: reports `ready (mock_mode)`, engine: `sqlite`, storage: `local_embedded`.
+
+### 9.2 Transparency & Attribution Guarantees
+- Assistant UI renders: `nvidia/Llama-3.1-Nemotron-70B-Instruct-HF • Simulation Mode` in an amber transparency badge.
+- API response metadata strictly includes `is_simulated: true` and `provider: "nebius-token-factory (simulated)"`.
+- Simulation mode is never falsely presented as live inference.
+- Privacy mode (`PRIVACY_MODE=hybrid`) ensures private documents and credentials never egress without explicit authorization.
+
+### 9.3 Comprehensive Re-Verification Matrix (Post-Phase 7 Validation)
+| Suite | Passed | Failed | Skipped | Notes |
+| :--- | :---: | :---: | :---: | :--- |
+| `scripts/verify_live_deployments.py` | **15** | 0 | 0 | Public HTTPS endpoints on Vercel and Render verified end-to-end |
+| `scripts/evaluate_rag_agent.py` | **52** | 0 | 0 | 100% recall, 100% citation grounding, 93.3% abstention |
+| `scripts/e2e_acceptance_test.py` | **8** | 0 | 0 | Auth -> memory -> upload -> RAG -> approval -> reflection loop |
+| `pytest apps/api/tests/ -q` | **91** | 0 | 1 | 1 skipped (`test_real_nebius_if_configured` requires live key) |
+| `npm run typecheck --prefix apps/web` | **0 errors** | 0 | 0 | Strict TypeScript validation |
+| `npm run build --prefix apps/web` | **14 / 14** | 0 | 0 | Production build generated cleanly |
+| `scripts/verify_nebius_inference.py` | **1** | 0 | 0 | `SIMULATION_VERIFIED` on public production URL |
