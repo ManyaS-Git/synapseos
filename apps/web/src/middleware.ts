@@ -22,15 +22,17 @@ function getClerkHandler(): NextMiddleware {
   return clerkHandler;
 }
 
-export default function middleware(req: NextRequest, event: NextFetchEvent) {
-  if (!process.env.CLERK_SECRET_KEY && !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+export default async function middleware(req: NextRequest, event: NextFetchEvent) {
+  // clerkMiddleware requires CLERK_SECRET_KEY on Edge runtime.
+  // If not configured in deployment, pass through safely without crashing.
+  if (!process.env.CLERK_SECRET_KEY) {
     return NextResponse.next();
   }
 
   try {
     const handler = getClerkHandler();
     if (handler) {
-      return handler(req, event);
+      return await handler(req, event);
     }
   } catch (error) {
     console.warn("Clerk middleware execution fallback:", error);
