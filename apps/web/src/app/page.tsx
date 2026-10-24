@@ -27,7 +27,7 @@ export default function HomePage() {
       {isAuthenticated && (
         <aside aria-label="Authenticated session" className="bg-primary/10 border-b border-primary/20 py-2.5 px-4 text-center text-xs font-medium text-foreground sticky top-0 z-50 backdrop-blur-md flex items-center justify-center gap-2">
           <Sparkles className="size-3.5 text-primary" />
-          <span>Signed in as <strong>{user?.full_name || user?.username}</strong></span>
+          <span>Signed in as <strong>{user?.full_name || user?.email}</strong></span>
           <Link
             href="/dashboard"
             className="ml-2 inline-flex items-center gap-1 underline underline-offset-4 font-semibold text-primary hover:text-primary/80"

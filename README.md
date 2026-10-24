@@ -38,22 +38,34 @@
 
 ## 📸 Application Showcase
 
-### 1. System Dashboard & Persistent Memory Stream
-Unified overview of your personal AI operating system featuring stored memories, grounded recall rate, active workspace management, and real-time evidence verification badges.
+### 1. System Dashboard & Neural Overview
+Unified overview of your personal AI operating system featuring stored memories, grounded recall rate, active workspace management, and real-time backend connectivity indicators.
 <p align="center">
-  <img src="docs/images/dashboard_overview.jpg" alt="SynapseOS Dashboard Overview" width="95%" />
+  <img src="docs/images/real_dashboard_overview.png" alt="SynapseOS Live Dashboard Overview" width="95%" />
 </p>
 
 ### 2. Assistant Copilot & Human-in-the-Loop Consequential Gate
-Conversational reasoning driven by **NVIDIA Nemotron-4-340B via Nebius Token Factory**. Consequential tools (e.g., project modifications, file alterations) pause automatically and render an interactive security approval gate for explicit human authorization before execution.
+Multi-step conversational reasoning driven by **NVIDIA Nemotron-4-340B via Nebius Token Factory**. Consequential tools (e.g., policy updates, file creation, code execution) pause automatically and render an interactive security gate requiring explicit human approval before proceeding.
 <p align="center">
-  <img src="docs/images/assistant_copilot.jpg" alt="SynapseOS Assistant Copilot & Human-in-the-Loop Gate" width="95%" />
+  <img src="docs/images/real_assistant_copilot.png" alt="SynapseOS Live Assistant Copilot & Human Approval Gate" width="95%" />
 </p>
 
-### 3. Interactive Knowledge & Memory Graph
-Visual exploration of interconnected knowledge nodes, entity associations, semantic memory clusters, and document references with real-time cosine similarity and node inspection.
+### 3. Interactive Knowledge & Neural Memory Graph
+Interactive visual exploration of interconnected knowledge nodes, entity relationships, semantic memory clusters, and document references with real-time cosine similarity thresholds and node inspection.
 <p align="center">
-  <img src="docs/images/knowledge_graph.jpg" alt="SynapseOS Knowledge & Memory Graph Visualizer" width="95%" />
+  <img src="docs/images/real_knowledge_graph.png" alt="SynapseOS Live Knowledge & Memory Graph Visualizer" width="95%" />
+</p>
+
+### 4. Multi-Modal Persistent Memory Stream
+Structured storage of rules, architectural decisions, and document extracts with strict workspace isolation, provenance citations, and instant semantic search.
+<p align="center">
+  <img src="docs/images/real_memory_manager.png" alt="SynapseOS Live Memory Stream Manager" width="95%" />
+</p>
+
+### 5. High-Performance Landing Experience
+Live web application featuring real-time telemetry, architecture workflows, and Clerk authentication integration.
+<p align="center">
+  <img src="docs/images/real_landing_hero.png" alt="SynapseOS Live Landing Experience" width="95%" />
 </p>
 
 ---

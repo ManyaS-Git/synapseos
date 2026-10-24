@@ -73,19 +73,27 @@ async function request<T>(
     ...((options.headers as Record<string, string>) || {}),
   };
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 18000);
+  const signal = options.signal || controller.signal;
+
   try {
     res = await fetch(url, {
       ...options,
+      signal,
       credentials: "include",
       headers,
     });
   } catch (err) {
     if (err instanceof ApiError) throw err;
     const msg = (err as Error)?.message || "";
-    if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("network")) {
+    const isTimeout = (err as Error)?.name === "AbortError" || msg.includes("aborted");
+    if (isTimeout || msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("network")) {
       throw new ApiError(0, "Backend service is waking up or temporarily unavailable. On free-tier cloud hosting, cold starts can take 30-45 seconds. Please wait a moment and retry.");
     }
     throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   // Capture token if returned in header (supports cross-domain cookie-restricted browsers)
