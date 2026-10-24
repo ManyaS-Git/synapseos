@@ -1,5 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { type NextMiddleware, type NextRequest, type NextFetchEvent, NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -9,16 +9,35 @@ const isPublicRoute = createRouteMatcher([
   "/monitoring(.*)",
 ]);
 
-export default clerkMiddleware((auth, req) => {
-  // If Clerk publishable key is not configured, pass through (e.g., during static build / offline local dev)
+let clerkHandler: NextMiddleware | null = null;
+
+function getClerkHandler(): NextMiddleware {
+  if (!clerkHandler) {
+    clerkHandler = clerkMiddleware((auth, req) => {
+      if (!isPublicRoute(req)) {
+        auth().protect();
+      }
+    });
+  }
+  return clerkHandler;
+}
+
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
     return NextResponse.next();
   }
 
-  if (!isPublicRoute(req)) {
-    auth().protect();
+  try {
+    const handler = getClerkHandler();
+    if (handler) {
+      return handler(req, event);
+    }
+  } catch (error) {
+    console.warn("Clerk middleware execution fallback:", error);
   }
-});
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
