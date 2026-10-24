@@ -1,5 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { type NextMiddleware, type NextRequest, type NextFetchEvent, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -9,37 +9,19 @@ const isPublicRoute = createRouteMatcher([
   "/monitoring(.*)",
 ]);
 
-let clerkHandler: NextMiddleware | null = null;
+const isClerkReady = Boolean(
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY
+);
 
-function getClerkHandler(): NextMiddleware {
-  if (!clerkHandler) {
-    clerkHandler = clerkMiddleware((auth, req) => {
+export default isClerkReady
+  ? clerkMiddleware((auth, req) => {
       if (!isPublicRoute(req)) {
         auth().protect();
       }
-    });
-  }
-  return clerkHandler;
-}
-
-export default async function middleware(req: NextRequest, event: NextFetchEvent) {
-  // clerkMiddleware requires CLERK_SECRET_KEY on Edge runtime.
-  // If not configured in deployment, pass through safely without crashing.
-  if (!process.env.CLERK_SECRET_KEY) {
-    return NextResponse.next();
-  }
-
-  try {
-    const handler = getClerkHandler();
-    if (handler) {
-      return await handler(req, event);
-    }
-  } catch (error) {
-    console.warn("Clerk middleware execution fallback:", error);
-  }
-
-  return NextResponse.next();
-}
+    })
+  : function middleware(_req: NextRequest) {
+      return NextResponse.next();
+    };
 
 export const config = {
   matcher: [
