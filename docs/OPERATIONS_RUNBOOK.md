@@ -136,6 +136,11 @@ To audit actions awaiting human approval:
 - Each session records: `session_id`, `user_id`, `workspace_id`, `goal`, `plan`, `created_at`, `expires_at`, and `status`.
 - Expired sessions ($\text{TTL} > 15 \text{ min}$) are automatically rejected by `ApprovalStore`.
 
+### 5.3 Clerk Identity Provider Operations & Triage
+- **Token Signature Triage**: If API logs report `401: Invalid Clerk token signature`, verify that `CLERK_JWT_KEY` in Render/local environment matches the active public key in Clerk Dashboard (`Configure > Developers > API Keys > JWT Public Key`).
+- **Networkless Verification**: SynapseOS defaults to local verification via `CLERK_JWT_KEY` to prevent external network dependencies or rate limits. If `CLERK_JWT_KEY` is omitted, the API will fetch public keys from `CLERK_JWKS_URL` or `CLERK_ISSUER/.well-known/jwks.json` and cache them for 3600 seconds.
+- **Emergency Local Fallback**: If Clerk encounters an upstream outage, administrators can remove `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` from the frontend environment. SynapseOS immediately restores the built-in local authentication and login flow without code changes.
+
 ---
 
 ## 6. Rollback Playbook

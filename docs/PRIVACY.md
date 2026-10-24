@@ -1,7 +1,7 @@
 # SynapseOS Privacy & Data Governance Architecture
 
-**Version**: 0.4.0 (Phase 4 — Private Beta)  
-**Last Updated**: 2026-10-22  
+**Version**: 0.5.0 (Phase 8 — Clerk Identity Integration)  
+**Last Updated**: 2026-10-24  
 
 SynapseOS is engineered from first principles around **user data ownership, transparency, and minimal external exposure**. This document outlines our data lifecycle, privacy boundaries, logging policies, and external transmission disclosures.
 
@@ -11,8 +11,9 @@ SynapseOS is engineered from first principles around **user data ownership, tran
 
 SynapseOS stores:
 1. **User Identity & Authentication**:
-   - Username, email address, password hash (hashed using Argon2id).
-   - Session timestamps and JWT signatures.
+   - Immutable Clerk User ID (`clerk_user_id`), email address, username, display name, and avatar URL.
+   - For Clerk-authenticated users, no plaintext passwords or password hashes are stored in the application backend (`password_hash` defaults to `"!clerk_managed"`).
+   - Session timestamps and verified RS256 token claims. Local auth passwords for legacy/test accounts continue to use Argon2id hashing.
 2. **Workspaces & Projects**:
    - Workspace names, slugs, user role mappings, and project groupings.
 3. **Memories & Documents**:

@@ -30,13 +30,43 @@ class ApiError extends Error {
   }
 }
 
+type TokenGetter = () => Promise<string | null>;
+let clerkTokenGetter: TokenGetter | null = null;
+
+export function setClerkTokenGetter(getter: TokenGetter | null) {
+  clerkTokenGetter = getter;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE}${path}`;
   let res: Response;
-  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+  let token: string | null = null;
+  if (clerkTokenGetter) {
+    try {
+      token = await clerkTokenGetter();
+    } catch {
+      token = null;
+    }
+  }
+  if (!token && typeof window !== "undefined") {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const clerk = (window as any).Clerk;
+      if (clerk?.session) {
+        token = await clerk.session.getToken();
+      }
+    } catch {
+      token = null;
+    }
+  }
+  if (!token && typeof window !== "undefined") {
+    token = localStorage.getItem("access_token");
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

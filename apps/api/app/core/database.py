@@ -86,6 +86,14 @@ class PostgreSQLManager:
                 from app.models import Base
                 async with self._engine.begin() as conn:
                     await conn.run_sync(Base.metadata.create_all)
+                    try:
+                        res = await conn.execute(text("PRAGMA table_info(users)"))
+                        columns = [row[1] for row in res.fetchall()]
+                        if columns and "clerk_user_id" not in columns:
+                            await conn.execute(text("ALTER TABLE users ADD COLUMN clerk_user_id VARCHAR(255)"))
+                            await conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_clerk_user_id ON users (clerk_user_id)"))
+                    except Exception:
+                        pass
             logger.info("Database connection established")
             self._last_error = None
         except Exception as exc:
@@ -110,6 +118,14 @@ class PostgreSQLManager:
                     from app.models import Base
                     async with self._engine.begin() as conn:
                         await conn.run_sync(Base.metadata.create_all)
+                        try:
+                            res = await conn.execute(text("PRAGMA table_info(users)"))
+                            columns = [row[1] for row in res.fetchall()]
+                            if columns and "clerk_user_id" not in columns:
+                                await conn.execute(text("ALTER TABLE users ADD COLUMN clerk_user_id VARCHAR(255)"))
+                                await conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_clerk_user_id ON users (clerk_user_id)"))
+                        except Exception:
+                            pass
                     logger.info("Local SQLite database fallback initialized and schema verified", path=local_db_path)
                     self._last_error = None
                 except Exception as fb_exc:

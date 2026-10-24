@@ -8,6 +8,7 @@ export interface User {
   avatar_url: string | null;
   email_verified: boolean;
   is_active: boolean;
+  clerk_user_id?: string | null;
   created_at: string;
   updated_at: string;
   last_login: string | null;

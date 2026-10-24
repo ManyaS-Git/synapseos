@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Instrument_Sans, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import '@/styles/globals.css';
 import { QueryProvider } from '@/providers/query-provider';
+import { SynapseAuthProvider } from '@/providers/auth-provider';
 
 const instrumentSans = Instrument_Sans({
   subsets: ['latin'],
@@ -35,7 +36,9 @@ export default function RootLayout({
       <body
         className={`${instrumentSans.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
-        <QueryProvider>{children}</QueryProvider>
+        <SynapseAuthProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </SynapseAuthProvider>
       </body>
     </html>
   );

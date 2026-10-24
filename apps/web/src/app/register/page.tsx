@@ -4,7 +4,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { SignUp } from "@clerk/nextjs";
 import { useRegister } from "@/hooks/use-auth";
+
+const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -68,7 +71,7 @@ export default function RegisterPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -84,113 +87,124 @@ export default function RegisterPage() {
           <p className="text-xs text-muted-foreground mt-1">Get started with private AI intelligence</p>
         </div>
 
-        {/* Form */}
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {errors.general && (
-              <div className="bg-destructive/10 text-destructive text-sm px-4 py-2 rounded-lg">
-                {errors.general}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="full_name" className="block text-sm font-medium text-foreground mb-1.5">
-                Full Name <span className="text-muted-foreground">(optional)</span>
-              </label>
-              <input
-                id="full_name"
-                type="text"
-                value={form.full_name}
-                onChange={(e) => update("full_name", e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                placeholder="John Doe"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                placeholder="you@example.com"
-              />
-              {errors.email && (
-                <p className="text-destructive text-xs mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">
-                Username
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={form.username}
-                onChange={(e) => update("username", e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                placeholder="johndoe"
-              />
-              {errors.username && (
-                <p className="text-destructive text-xs mt-1">{errors.username}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={form.password}
-                onChange={(e) => update("password", e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                placeholder="Min. 8 characters"
-              />
-              {errors.password && (
-                <p className="text-destructive text-xs mt-1">{errors.password}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-1.5">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={form.confirmPassword}
-                onChange={(e) => update("confirmPassword", e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                placeholder="Confirm your password"
-              />
-              {errors.confirmPassword && (
-                <p className="text-destructive text-xs mt-1">{errors.confirmPassword}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={registerMutation.isPending}
-              className="w-full py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {registerMutation.isPending ? "Creating account..." : "Create account"}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline font-medium">
-              Sign in
-            </Link>
+        {/* Clerk Sign-up when configured */}
+        {isClerkConfigured ? (
+          <div className="flex justify-center">
+            <SignUp
+              routing="hash"
+              signInUrl="/login"
+              fallbackRedirectUrl="/dashboard"
+            />
           </div>
-        </div>
+        ) : (
+          /* Fallback Local Form */
+          <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {errors.general && (
+                <div className="bg-destructive/10 text-destructive text-sm px-4 py-2 rounded-lg">
+                  {errors.general}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="full_name" className="block text-sm font-medium text-foreground mb-1.5">
+                  Full Name <span className="text-muted-foreground">(optional)</span>
+                </label>
+                <input
+                  id="full_name"
+                  type="text"
+                  value={form.full_name}
+                  onChange={(e) => update("full_name", e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  placeholder="John Doe"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => update("email", e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  placeholder="you@example.com"
+                />
+                {errors.email && (
+                  <p className="text-destructive text-xs mt-1">{errors.email}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => update("username", e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  placeholder="johndoe"
+                />
+                {errors.username && (
+                  <p className="text-destructive text-xs mt-1">{errors.username}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => update("password", e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  placeholder="Min. 8 characters"
+                />
+                {errors.password && (
+                  <p className="text-destructive text-xs mt-1">{errors.password}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-1.5">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={(e) => update("confirmPassword", e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  placeholder="Confirm your password"
+                />
+                {errors.confirmPassword && (
+                  <p className="text-destructive text-xs mt-1">{errors.confirmPassword}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={registerMutation.isPending}
+                className="w-full py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {registerMutation.isPending ? "Creating account..." : "Create account"}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link href="/login" className="text-primary hover:underline font-medium">
+                Sign in
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

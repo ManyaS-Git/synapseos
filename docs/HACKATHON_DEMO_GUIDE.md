@@ -49,14 +49,10 @@ Most AI assistants operate as stateless prompt wrappers. They forget context bet
 
 ### Track B: 5-Minute Interactive Judge Walkthrough (Single Coherent Scenario: "Project Apollo")
 
-#### Step 1: Launch & Register (45s)
-1. Open [https://synapseos-three.vercel.app](https://synapseos-three.vercel.app) and click **Sign Up**.
-2. Enter demo credentials:
-   - Full Name: `Judge Evaluator`
-   - Username: `judge_demo`
-   - Email: `judge@example.com`
-   - Password: `JudgeSecurePass123!`
-3. The personal workspace is automatically initialized, and secure dual-defense session credentials (HttpOnly cookie + Bearer token) are established.
+#### Step 1: Launch & Authenticate (45s)
+1. Open [https://synapseos-three.vercel.app](https://synapseos-three.vercel.app) and click **Launch OS** or **Sign in**.
+2. Sign in via Clerk (using social OAuth, email code, or password) or use demo credentials.
+3. Upon first sign-in, an isolated personal workspace is automatically initialized via idempotent backend JIT provisioning, establishing a verified RS256 Bearer session token.
 
 #### Step 2: Ingest Ground Truth Memory (45s)
 1. In the sidebar, select **Memory** -> **New Memory**.

@@ -12,13 +12,14 @@ class UserResponse(BaseModel):
     id: uuid.UUID
     email: str
     username: str
-    full_name: str | None
-    avatar_url: str | None
-    email_verified: bool
-    is_active: bool
+    full_name: str | None = None
+    avatar_url: str | None = None
+    email_verified: bool = False
+    is_active: bool = True
+    clerk_user_id: str | None = None
     created_at: datetime
     updated_at: datetime
-    last_login: datetime | None
+    last_login: datetime | None = None
 
     model_config = {"from_attributes": True}
 

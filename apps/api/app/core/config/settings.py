@@ -122,6 +122,32 @@ class AppSettings(BaseSettings):
     jwt_cookie_name: str = Field(default="synapseos_session", description="JWT cookie name")
     jwt_cookie_domain: str | None = Field(default=None, description="JWT cookie domain")
 
+    # Clerk Authentication
+    clerk_publishable_key: str = Field(
+        default="",
+        description="Clerk Frontend Publishable Key (pk_test_... or pk_live_...)",
+    )
+    clerk_secret_key: str = Field(
+        default="",
+        description="Clerk Backend Secret Key (sk_test_... or sk_live_...)",
+    )
+    clerk_jwt_key: str = Field(
+        default="",
+        description="Clerk PEM public key for networkless JWT verification",
+    )
+    clerk_jwks_url: str = Field(
+        default="",
+        description="Clerk JWKS URL (e.g. https://api.clerk.com/v1/jwks or https://<app>.clerk.accounts.dev/.well-known/jwks.json)",
+    )
+    clerk_issuer: str = Field(
+        default="",
+        description="Clerk Issuer URL (e.g. https://<app>.clerk.accounts.dev)",
+    )
+    clerk_audience: str = Field(
+        default="",
+        description="Clerk Audience claim if configured in JWT template",
+    )
+
     # Logging
     log_format: str = Field(default="console", description="Log format: console or json")
     log_file: str = Field(default="logs/synapseos.log", description="Log file path")

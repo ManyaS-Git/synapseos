@@ -49,7 +49,11 @@ graph TD
 | `NEBIUS_BASE_URL` | Backend | No | OpenAI-compatible endpoint | `https://api.tokenfactory.nebius.com/v1` |
 | `NEBIUS_MODEL` | Backend | No | NVIDIA Nemotron model ID | `nvidia/Llama-3.1-Nemotron-70B-Instruct-HF` |
 | `PRIVACY_MODE` | Backend | No | Privacy boundary (`hybrid`, `local_only`) | `hybrid` |
-| `NEXT_PUBLIC_API_URL` | **Frontend (Public)** | **Yes** | Base URL for API calls from browser | `http://localhost:8000` or `https://api.synapseos.internal` |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | **Frontend (Public)** | **Yes (Clerk)** | Clerk Publishable Key (`pk_...`) | `pk_live_your_clerk_key` |
+| `CLERK_SECRET_KEY` | **Backend (Secret)** | **Yes (Clerk)** | Clerk Backend Secret Key (`sk_...`) | `sk_live_your_clerk_key` |
+| `CLERK_JWT_KEY` | **Backend (Secret)** | Optional | Clerk PEM public key for local verification | `-----BEGIN PUBLIC KEY-----\n...` |
+| `CLERK_ISSUER` | Backend | Optional | Clerk Issuer instance URL | `https://your-app.clerk.accounts.dev` |
+| `NEXT_PUBLIC_API_URL` | **Frontend (Public)** | **Yes** | Base URL for API calls from browser | `http://localhost:8000` or `https://synapseos-api-2onj.onrender.com` |
 | `NEXT_PUBLIC_WS_URL` | **Frontend (Public)** | No | WebSocket endpoint | `ws://localhost:8000/ws` |
 
 ### Generating Cryptographic Secrets

@@ -74,6 +74,12 @@ def decode_token(token: str) -> dict | None:
         return None
 
 
+from app.core.security.clerk import (
+    get_or_create_clerk_user,
+    is_clerk_token,
+    verify_clerk_token,
+)
+
 # ── FastAPI Dependencies ─────────────────────────────────────────────────
 
 
@@ -81,9 +87,10 @@ async def get_current_user(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    """Extract and validate the current user from the session cookie.
+    """Extract and validate the current user from Bearer header or session cookie.
 
-    Raises 401 if the cookie is missing, invalid, or the user doesn't exist.
+    Supports both Clerk RS256 session tokens and internal SynapseOS JWTs.
+    Raises 401 if missing, invalid, expired, or user not found.
     """
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
@@ -98,31 +105,55 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # 1. Check if token is a Clerk RS256 token
+    if is_clerk_token(token):
+        clerk_payload = await verify_clerk_token(token)
+        clerk_sub = clerk_payload["sub"]
+        return await get_or_create_clerk_user(db, clerk_sub, clerk_payload)
+
+    # 2. Check if token is a local SynapseOS HS256 token
     payload = decode_token(token)
-    if payload is None or payload.get("type") != "access":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    if payload is not None and payload.get("type") == "access":
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+            )
 
-    user_id = payload.get("sub")
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        try:
+            parsed_uuid = uuid.UUID(user_id)
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload identity format",
+            )
 
-    result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
-    user = result.scalar_one_or_none()
+        result = await db.execute(select(User).where(User.id == parsed_uuid))
+        user = result.scalar_one_or_none()
 
-    if user is None or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive",
-        )
+        if user is None or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found or inactive",
+            )
 
-    return user
+        return user
+
+    # 3. Fallback: If Clerk verification is configured, attempt Clerk verification
+    if settings.clerk_jwt_key or settings.clerk_jwks_url or settings.clerk_secret_key:
+        try:
+            clerk_payload = await verify_clerk_token(token)
+            clerk_sub = clerk_payload["sub"]
+            return await get_or_create_clerk_user(db, clerk_sub, clerk_payload)
+        except HTTPException:
+            pass
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 async def get_current_active_user(
@@ -136,6 +167,7 @@ async def get_current_active_user(
         )
     return current_user
 
+
 __all__ = [
     "pwd_context",
     "hash_password",
@@ -145,4 +177,7 @@ __all__ = [
     "decode_token",
     "get_current_user",
     "get_current_active_user",
+    "verify_clerk_token",
+    "is_clerk_token",
+    "get_or_create_clerk_user",
 ]

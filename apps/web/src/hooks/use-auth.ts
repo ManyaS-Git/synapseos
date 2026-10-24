@@ -15,22 +15,22 @@ export function useAuth() {
   const { user, isAuthenticated, isLoading, setUser } =
     useAuthStore();
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isLoading: queryLoading, isError } = useQuery({
     queryKey: ["auth", "me"],
     queryFn: authApi.me,
     retry: false,
-    enabled: !isLoading,
+    staleTime: 1000 * 60 * 5,
   });
 
   useEffect(() => {
-    if (!isLoading && currentUser) {
+    if (!queryLoading && currentUser) {
       setUser(currentUser);
-    } else if (!isLoading && !currentUser) {
+    } else if (!queryLoading && isError) {
       setUser(null);
     }
-  }, [currentUser, isLoading, setUser]);
+  }, [currentUser, queryLoading, isError, setUser]);
 
-  return { user, isAuthenticated, isLoading };
+  return { user, isAuthenticated, isLoading: isLoading && queryLoading };
 }
 
 export function useLogin() {
@@ -69,8 +69,28 @@ export function useLogout() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: authApi.logout,
+    mutationFn: async () => {
+      // 1. Sign out of Clerk if active
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const clerk = typeof window !== "undefined" ? (window as any).Clerk : null;
+        if (clerk && typeof clerk.signOut === "function") {
+          await clerk.signOut();
+        }
+      } catch {
+        // Continue if clerk signOut fails
+      }
+      // 2. Call backend logout to clear session cookies
+      try {
+        await authApi.logout();
+      } catch {
+        // Continue
+      }
+    },
     onSuccess: () => {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("access_token");
+      }
       storeLogout();
       queryClient.clear();
       router.push("/login");
