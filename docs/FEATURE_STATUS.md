@@ -1,7 +1,7 @@
-# SynapseOS Feature Status Specification (Phase 8 Release)
+# SynapseOS Feature Status Specification (Phase 9 Release)
 
-**Last Updated:** Phase 8 — Clerk Authentication & Identity Integration  
-**Version:** `0.5.0`  
+**Last Updated:** Phase 9 — Clerk Authentication: Production Verification & Security Audit  
+**Version:** `0.5.1`  
 **Architecture:** FastAPI Backend + Next.js 14 Frontend + Clerk Identity + NVIDIA Nemotron via Nebius Token Factory  
 
 This document provides a transparent, evidence-based breakdown of all capabilities in SynapseOS, strictly distinguishing verified functionality, simulation paths, infrastructure requirements, and unverified/unimplemented features.
@@ -86,8 +86,9 @@ This document provides a transparent, evidence-based breakdown of all capabiliti
 | **HTTP Security Headers** | `VERIFIED` | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`. |
 | **Request ID Tracing & Error Sanitization** | `VERIFIED` | `X-Request-ID` stamped on responses and correlated in HTTP 500 error payloads without stack trace leaks. |
 | **Path Traversal Protection** | `VERIFIED` | Document upload filenames sanitized using `FilePath(filename).name` stripping directory traversal paths. Tested in `test_security_audit.py`. |
-| **Clerk Authentication Provider (`@clerk/nextjs` v5)** | `VERIFIED` | `apps/web/src/middleware.ts`, `apps/web/src/providers/auth-provider.tsx`, `apps/web/src/app/login/page.tsx` | Next.js App Router edge middleware route protection, ClerkProvider dark theme, official SignIn/SignUp components, client-side session bridge. |
-| **Backend Clerk RS256 Verification** | `VERIFIED` | `apps/api/app/core/security/clerk.py` | Independent cryptographic verification using PEM public key (`CLERK_JWT_KEY`) or JWKS (`CLERK_JWKS_URL`). Rejects invalid signatures, expired tokens, and wrong issuers. 8 unit tests in `test_clerk_auth.py`. |
+| **Clerk Authentication Provider (`@clerk/nextjs` v5)** | `VERIFIED` | `apps/web/src/middleware.ts`, `apps/web/src/providers/auth-provider.tsx`, `apps/web/src/app/login/page.tsx` | Next.js App Router edge middleware route protection, ClerkProvider dark theme, official SignIn/SignUp components, client-side session bridge. Verified live in browser with real visual rendering. |
+| **Backend Clerk RS256 Verification** | `VERIFIED` | `apps/api/app/core/security/clerk.py` | Independent cryptographic verification using PEM public key (`CLERK_JWT_KEY`), public JWKS auto-discovery from publishable key, or cached JWKS (`CLERK_JWKS_URL`). Rejects invalid signatures, expired tokens, and mismatched issuers. Tested in `test_clerk_auth.py`. |
+| **Multi-Tenant Cross-User Authorization Matrix** | `VERIFIED` | `apps/api/tests/test_multi_tenant_authorization.py` | Rigorous 17-point audit testing two distinct Clerk users and workspaces across memory CRUD, uploads, search, graphs, RAG queries, agent actions, approval gates, and workspace deletion. 100% isolation verified. |
 | **Identity Mapping & Idempotent Provisioning** | `VERIFIED` | `apps/api/app/core/security/clerk.py` | Maps verified `clerk_user_id` to internal `User` and default personal `Workspace`. Strictly avoids hijacking existing accounts by never automatically merging by email. |
 | **Rate Limiting & Cost Protection** | `IMPLEMENTED — NOT FULLY VERIFIED` | In-memory token bucket limits active; Redis-backed distributed rate limiter available for scaled deployment. |
 

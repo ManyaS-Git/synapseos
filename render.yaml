@@ -39,3 +39,13 @@ services:
         value: "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF"
       - key: NEBIUS_API_KEY
         sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        value: "pk_test_dHJ1c3R5LW11bGxldC0zMzEwLmNsZXJrLmFjY291bnRzLmRldiQ"
+      - key: CLERK_ISSUER
+        value: "https://trusty-mullet-3310.clerk.accounts.dev"
+      - key: CLERK_JWKS_URL
+        value: "https://trusty-mullet-3310.clerk.accounts.dev/.well-known/jwks.json"
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_JWT_KEY
+        sync: false

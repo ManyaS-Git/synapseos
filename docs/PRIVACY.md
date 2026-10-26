@@ -69,13 +69,18 @@ SynapseOS supports three explicit inference routing modes (configurable in `.env
 ## 4. Privacy-First Observability & Zero Key Leakage
 
 To preserve strict privacy standards while maintaining operational visibility:
-1. **Server-Side Credential Containment**:
-   - `NEBIUS_API_KEY` is loaded exclusively on the backend into memory. It is never exposed in frontend bundles, HTML, local storage, API responses, or error messages.
-   - Any API error string matching the key pattern is sanitized to `[REDACTED_API_KEY]`.
-2. **Zero Prompt Telemetry**:
+1. **Server-Side Credential Containment & Clerk Token Privacy**:
+   - `NEBIUS_API_KEY`, `CLERK_SECRET_KEY`, and `JWT_SECRET_KEY` are loaded exclusively on the backend. They are never exposed in frontend bundles, HTML, local storage, API responses, or error messages.
+   - Clerk session tokens (RS256 JWTs) and Bearer headers are strictly excluded from server log outputs.
+   - Frontend client code only references public publishable keys (`pk_test_...` or `pk_live_...`).
+   - Any API error string matching sensitive key patterns is sanitized to `[REDACTED_API_KEY]`.
+2. **Account Safety & Anti-Hijacking Invariant**:
+   - Clerk identities are linked exclusively via the verified, immutable `clerk_user_id` subject claim.
+   - The system strictly forbids automatic account linking or merging based on email alone, preventing malicious identity collisions with pre-existing local accounts.
+3. **Zero Prompt Telemetry**:
    - `LLMTelemetryManager` records only non-content operational telemetry: request ID, model identifier, provider name, latency in milliseconds, prompt tokens, completion tokens, retry attempts, and HTTP status codes.
    - User prompt content, document text, and completion text are strictly excluded from telemetry stores and logs.
-3. **Transparent Provider Attribution**:
+4. **Transparent Provider Attribution**:
    - Every assistant and RAG response returned to the client includes explicit metadata flags: `is_simulated`, `is_fallback`, `provider`, and `model_used`.
    - The frontend renders an explicit badge distinguishing "Live Nebius AI" from "Simulation Mode" or "Fallback", ensuring simulated answers can never be mistaken for real model inference.
 

@@ -33,6 +33,31 @@ _JWKS_CACHED_AT: float = 0.0
 _JWKS_CACHE_TTL_SECONDS: float = 3600.0  # 1 hour cache
 
 
+def extract_clerk_domain_from_publishable_key(publishable_key: str) -> str | None:
+    """Extract Clerk frontend API domain from publishable key.
+    
+    Clerk publishable keys encode the frontend API domain in the third segment:
+    pk_test_<base64_encoded_domain>$ or pk_live_<base64_encoded_domain>$
+    """
+    if not publishable_key:
+        return None
+    try:
+        parts = publishable_key.strip().split("_")
+        if len(parts) >= 3:
+            raw = parts[2]
+            if raw.endswith("$"):
+                raw = raw[:-1]
+            raw += "=" * (-len(raw) % 4)
+            import base64
+            domain = base64.b64decode(raw).decode("utf-8")
+            if domain.endswith("$"):
+                domain = domain[:-1]
+            return domain
+    except Exception:
+        pass
+    return None
+
+
 def normalize_pem_public_key(key: str) -> str:
     """Normalize a PEM public key string."""
     key = key.strip()
@@ -49,6 +74,7 @@ async def fetch_clerk_jwks(force_refresh: bool = False) -> dict[str, Any]:
     """Fetch and cache Clerk's JWKS public keys.
     
     Tries configured CLERK_JWKS_URL, or CLERK_ISSUER/.well-known/jwks.json,
+    or CLERK_PUBLISHABLE_KEY domain/.well-known/jwks.json,
     or the default Clerk API JWKS endpoint.
     """
     global _JWKS_CACHE, _JWKS_CACHED_AT
@@ -62,6 +88,12 @@ async def fetch_clerk_jwks(force_refresh: bool = False) -> dict[str, Any]:
         if settings.clerk_issuer:
             issuer = settings.clerk_issuer.rstrip("/")
             jwks_url = f"{issuer}/.well-known/jwks.json"
+        elif settings.clerk_publishable_key:
+            domain = extract_clerk_domain_from_publishable_key(settings.clerk_publishable_key)
+            if domain:
+                jwks_url = f"https://{domain}/.well-known/jwks.json"
+            else:
+                jwks_url = "https://api.clerk.com/v1/jwks"
         else:
             jwks_url = "https://api.clerk.com/v1/jwks"
 
@@ -134,6 +166,10 @@ async def verify_clerk_token(token: str) -> dict[str, Any]:
     kid = header.get("kid")
     payload: dict[str, Any] | None = None
     expected_issuer = settings.clerk_issuer or None
+    if not expected_issuer and settings.clerk_publishable_key:
+        domain = extract_clerk_domain_from_publishable_key(settings.clerk_publishable_key)
+        if domain:
+            expected_issuer = f"https://{domain}"
     expected_audience = settings.clerk_audience or None
 
     # Method 1: Networkless PEM verification if CLERK_JWT_KEY is provided

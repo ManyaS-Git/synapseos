@@ -51,8 +51,9 @@ Most AI assistants operate as stateless prompt wrappers. They forget context bet
 
 #### Step 1: Launch & Authenticate (45s)
 1. Open [https://synapseos-three.vercel.app](https://synapseos-three.vercel.app) and click **Launch OS** or **Sign in**.
-2. Sign in via Clerk (using social OAuth, email code, or password) or use demo credentials.
+2. Sign in via Clerk (Google OAuth, email verification, or passwordless auth) or use demo credentials.
 3. Upon first sign-in, an isolated personal workspace is automatically initialized via idempotent backend JIT provisioning, establishing a verified RS256 Bearer session token.
+4. Protected application routes (`/dashboard`, `/assistant`, `/memory`, `/projects`, `/settings`) enforce strict authentication boundaries: unauthenticated visitors are redirected to `/login`.
 
 #### Step 2: Ingest Ground Truth Memory (45s)
 1. In the sidebar, select **Memory** -> **New Memory**.

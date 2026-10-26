@@ -50,9 +50,10 @@ graph TD
 | `NEBIUS_MODEL` | Backend | No | NVIDIA Nemotron model ID | `nvidia/Llama-3.1-Nemotron-70B-Instruct-HF` |
 | `PRIVACY_MODE` | Backend | No | Privacy boundary (`hybrid`, `local_only`) | `hybrid` |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | **Frontend (Public)** | **Yes (Clerk)** | Clerk Publishable Key (`pk_...`) | `pk_live_your_clerk_key` |
-| `CLERK_SECRET_KEY` | **Backend (Secret)** | **Yes (Clerk)** | Clerk Backend Secret Key (`sk_...`) | `sk_live_your_clerk_key` |
-| `CLERK_JWT_KEY` | **Backend (Secret)** | Optional | Clerk PEM public key for local verification | `-----BEGIN PUBLIC KEY-----\n...` |
+| `CLERK_SECRET_KEY` | **Backend & Edge (Secret)** | **Yes (Clerk)** | Clerk Backend Secret Key (`sk_...`) | `sk_live_your_clerk_key` |
+| `CLERK_JWT_KEY` | **Backend (Secret)** | Optional | Clerk PEM public key for networkless verification | `-----BEGIN PUBLIC KEY-----\n...` |
 | `CLERK_ISSUER` | Backend | Optional | Clerk Issuer instance URL | `https://your-app.clerk.accounts.dev` |
+| `CLERK_JWKS_URL` | Backend | Optional | Clerk JWKS URL (auto-resolved from issuer/publishable key) | `https://your-app.clerk.accounts.dev/.well-known/jwks.json` |
 | `NEXT_PUBLIC_API_URL` | **Frontend (Public)** | **Yes** | Base URL for API calls from browser | `http://localhost:8000` or `https://synapseos-api-2onj.onrender.com` |
 | `NEXT_PUBLIC_WS_URL` | **Frontend (Public)** | No | WebSocket endpoint | `ws://localhost:8000/ws` |
 
@@ -175,6 +176,7 @@ For deploying to Kubernetes (EKS / GKE / AKS) or managed container environments 
 
 ## 6. Rollback Procedure
 
+### 6.1 Container & Local Rollback
 If a deployment fails health checks or regressions are discovered:
 
 1. **Stop active containers**:
@@ -194,3 +196,13 @@ If a deployment fails health checks or regressions are discovered:
    ```bash
    curl -f http://localhost:8000/health/ready
    ```
+
+### 6.2 Cloud Authentication Rollback (Vercel & Render)
+If Clerk authentication encounters an upstream provider outage:
+1. **Fallback Dual-Mode**: The backend continues to accept local HS256 tokens (`synapseos_session` cookie and Bearer tokens) created via `/api/v1/auth/login` and `/api/v1/auth/register`. Existing local users and automated test suites remain operational.
+2. **Vercel Rollback**:
+   - In Vercel Dashboard, select **Deployments**, click the three dots on the previous deployment, and select **Redeploy**.
+   - Alternatively, remove `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` in Vercel **Settings > Environment Variables** to activate the local fallback form immediately.
+3. **Render Rollback**:
+   - In Render Dashboard, select **synapseos-api > Manual Deploy > Deploy a specific commit**, and choose the last verified commit.
+   - The embedded SQLite database and schema preserve user data across rollbacks without destructive data loss.

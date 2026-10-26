@@ -138,7 +138,9 @@ To audit actions awaiting human approval:
 
 ### 5.3 Clerk Identity Provider Operations & Triage
 - **Token Signature Triage**: If API logs report `401: Invalid Clerk token signature`, verify that `CLERK_JWT_KEY` in Render/local environment matches the active public key in Clerk Dashboard (`Configure > Developers > API Keys > JWT Public Key`).
-- **Networkless Verification**: SynapseOS defaults to local verification via `CLERK_JWT_KEY` to prevent external network dependencies or rate limits. If `CLERK_JWT_KEY` is omitted, the API will fetch public keys from `CLERK_JWKS_URL` or `CLERK_ISSUER/.well-known/jwks.json` and cache them for 3600 seconds.
+- **Networkless Verification & Public JWKS Auto-Discovery**: SynapseOS supports networkless verification via `CLERK_JWT_KEY` to prevent external network dependencies or rate limits. If `CLERK_JWT_KEY` is omitted, the API automatically discovers the instance's public JWKS endpoint (`CLERK_JWKS_URL` or derived from `CLERK_PUBLISHABLE_KEY`) without requiring secret keys, caching keys for 3600 seconds.
+- **Clock Drift Leeway**: Token verification tolerates up to 5 seconds of clock skew between client, Clerk, and server.
+- **Account Deactivation Handling**: If a user is deactivated in the local database or Clerk, protected endpoints return `403 Forbidden: Account is deactivated`.
 - **Emergency Local Fallback**: If Clerk encounters an upstream outage, administrators can remove `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` from the frontend environment. SynapseOS immediately restores the built-in local authentication and login flow without code changes.
 
 ---
