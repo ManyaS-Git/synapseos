@@ -1,0 +1,203 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" role="img" aria-label="SynapseOS system architecture: client, gateway, intelligence core, inference and persistence">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#04070C"/>
+      <stop offset="0.5" stop-color="#070D15"/>
+      <stop offset="1" stop-color="#050B12"/>
+    </linearGradient>
+    <radialGradient id="glowBlue" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3B82F6" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#3B82F6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowGreen" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#34D399" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#34D399" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94A3B8" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="900" fill="url(#bg)"/>
+  <rect width="1280" height="900" fill="url(#grid)"/>
+  <circle cx="1110" cy="170" r="330" fill="url(#glowBlue)"/>
+  <circle cx="160" cy="760" r="300" fill="url(#glowGreen)"/>
+
+  <!-- header -->
+  <text x="64" y="52" fill="#6EE7B7" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" letter-spacing="3">SYNAPSEOS // SYSTEM ARCHITECTURE</text>
+  <text x="64" y="98" fill="#F8FAFC" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="35" font-weight="750" letter-spacing="-1.2">One bounded loop. Four trust boundaries.</text>
+  <text x="64" y="128" fill="#94A3B8" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15">Every request is authenticated, tenant-scoped, grounded, and approved before it can change your workspace.</text>
+
+  <!-- connectors -->
+  <line x1="640" y1="280" x2="640" y2="303" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="640" y1="430" x2="640" y2="453" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="640" y1="610" x2="640" y2="633" stroke="#64748B" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- LAYER 1 -->
+  <rect x="64" y="160" width="1152" height="120" rx="18" fill="#0A0F18" stroke="#1E293B"/>
+  <text x="84" y="186" fill="#60A5FA" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing="2.4">01  CLIENT &amp; EDGE</text>
+
+  <g font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <g>
+      <rect x="84" y="202" width="258" height="58" rx="10" fill="#0F172A" stroke="#24344D"/>
+      <circle cx="102" cy="220" r="4" fill="#60A5FA"/>
+      <text x="116" y="225" fill="#E2E8F0" font-size="13.5" font-weight="650">Next.js 14 App Router</text>
+      <text x="100" y="246" fill="#8B9BB0" font-size="10.5">Dashboard · Copilot · Memory · Graph</text>
+    </g>
+    <g>
+      <rect x="362" y="202" width="258" height="58" rx="10" fill="#0F172A" stroke="#24344D"/>
+      <circle cx="380" cy="220" r="4" fill="#60A5FA"/>
+      <text x="394" y="225" fill="#E2E8F0" font-size="13.5" font-weight="650">Clerk Identity</text>
+      <text x="378" y="246" fill="#8B9BB0" font-size="10.5">OAuth · MFA · RS256 sessions</text>
+    </g>
+    <g>
+      <rect x="640" y="202" width="258" height="58" rx="10" fill="#0F172A" stroke="#24344D"/>
+      <circle cx="658" cy="220" r="4" fill="#60A5FA"/>
+      <text x="672" y="225" fill="#E2E8F0" font-size="13.5" font-weight="650">Privacy Controls</text>
+      <text x="656" y="246" fill="#8B9BB0" font-size="10.5">local_only · hybrid · cloud</text>
+    </g>
+    <g>
+      <rect x="918" y="202" width="278" height="58" rx="10" fill="#0F172A" stroke="#24344D"/>
+      <circle cx="936" cy="220" r="4" fill="#60A5FA"/>
+      <text x="950" y="225" fill="#E2E8F0" font-size="13.5" font-weight="650">Provider Attribution</text>
+      <text x="934" y="246" fill="#8B9BB0" font-size="10.5">is_simulated · is_fallback · model_used</text>
+    </g>
+  </g>
+
+  <!-- LAYER 2 -->
+  <rect x="64" y="310" width="1152" height="120" rx="18" fill="#0B0E14" stroke="#2A2113"/>
+  <text x="84" y="336" fill="#F59E0B" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing="2.4">02  API &amp; SECURITY GATEWAY</text>
+
+  <g font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <g>
+      <rect x="84" y="352" width="258" height="58" rx="10" fill="#151006" stroke="#3D2E14"/>
+      <circle cx="102" cy="370" r="4" fill="#F59E0B"/>
+      <text x="116" y="375" fill="#FEF3C7" font-size="13.5" font-weight="650">FastAPI Gateway</text>
+      <text x="100" y="396" fill="#A89778" font-size="10.5">REST · OpenAPI · request IDs</text>
+    </g>
+    <g>
+      <rect x="362" y="352" width="258" height="58" rx="10" fill="#151006" stroke="#3D2E14"/>
+      <circle cx="380" cy="370" r="4" fill="#F59E0B"/>
+      <text x="394" y="375" fill="#FEF3C7" font-size="13.5" font-weight="650">Dual-Mode Auth</text>
+      <text x="378" y="396" fill="#A89778" font-size="10.5">Clerk RS256 + local HS256 JWT</text>
+    </g>
+    <g>
+      <rect x="640" y="352" width="258" height="58" rx="10" fill="#151006" stroke="#3D2E14"/>
+      <circle cx="658" cy="370" r="4" fill="#F59E0B"/>
+      <text x="672" y="375" fill="#FEF3C7" font-size="13.5" font-weight="650">Tenant Guard</text>
+      <text x="656" y="396" fill="#A89778" font-size="10.5">workspace_id scoped on every query</text>
+    </g>
+    <g>
+      <rect x="918" y="352" width="278" height="58" rx="10" fill="#151006" stroke="#3D2E14"/>
+      <circle cx="936" cy="370" r="4" fill="#F59E0B"/>
+      <text x="950" y="375" fill="#FEF3C7" font-size="13.5" font-weight="650">Rate Limiting &amp; CORS</text>
+      <text x="934" y="396" fill="#A89778" font-size="10.5">100/min default · 10/min auth</text>
+    </g>
+  </g>
+
+  <!-- LAYER 3 -->
+  <rect x="64" y="460" width="1152" height="150" rx="18" fill="#08120F" stroke="#163A2D"/>
+  <text x="84" y="486" fill="#34D399" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing="2.4">03  INTELLIGENCE CORE</text>
+
+  <g font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <g>
+      <rect x="84" y="502" width="270" height="88" rx="10" fill="#0B1A16" stroke="#1D5744"/>
+      <text x="100" y="528" fill="#D1FAE5" font-size="14" font-weight="650">Memory Engine</text>
+      <text x="100" y="550" fill="#8FB8A8" font-size="10.5">chunk · embed · tag · graph</text>
+      <text x="100" y="568" fill="#6F9A8A" font-size="10">5 formats · 10 MB limit · provenance</text>
+    </g>
+    <g>
+      <rect x="370" y="502" width="270" height="88" rx="10" fill="#0B1A16" stroke="#1D5744"/>
+      <text x="386" y="528" fill="#D1FAE5" font-size="14" font-weight="650">RAG Pipeline</text>
+      <text x="386" y="550" fill="#8FB8A8" font-size="10.5">vector recall · citations</text>
+      <text x="386" y="568" fill="#6F9A8A" font-size="10">abstention + injection guard</text>
+    </g>
+    <g>
+      <rect x="656" y="502" width="270" height="88" rx="10" fill="#0B1A16" stroke="#1D5744"/>
+      <text x="672" y="528" fill="#D1FAE5" font-size="14" font-weight="650">Agent Runtime</text>
+      <text x="672" y="550" fill="#8FB8A8" font-size="10.5">Nemotron plan · tool registry</text>
+      <text x="672" y="568" fill="#6F9A8A" font-size="10">approval gate · replay guard</text>
+    </g>
+    <g>
+      <rect x="942" y="502" width="254" height="88" rx="10" fill="#0B1A16" stroke="#1D5744"/>
+      <text x="958" y="528" fill="#D1FAE5" font-size="14" font-weight="650">Reflection Engine</text>
+      <text x="958" y="550" fill="#8FB8A8" font-size="10.5">outcome synthesis</text>
+      <text x="958" y="568" fill="#6F9A8A" font-size="10">observation memories</text>
+    </g>
+  </g>
+
+  <!-- LAYER 4 -->
+  <rect x="64" y="640" width="1152" height="190" rx="18" fill="#0A0D18" stroke="#232D45"/>
+  <text x="84" y="666" fill="#A78BFA" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing="2.4">04  INFERENCE &amp; PERSISTENCE</text>
+  <text x="84" y="690" fill="#8B9BB0" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" letter-spacing="2">INFERENCE</text>
+  <text x="636" y="690" fill="#8B9BB0" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" letter-spacing="2">STORAGE</text>
+
+  <g font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <!-- inference -->
+    <g>
+      <rect x="84" y="704" width="164" height="100" rx="10" fill="#120B1F" stroke="#41255F"/>
+      <circle cx="100" cy="724" r="4" fill="#A78BFA"/>
+      <text x="112" y="728" fill="#EDE9FE" font-size="12" font-weight="650">Nebius Token</text>
+      <text x="100" y="746" fill="#B7A8D6" font-size="10">Factory API</text>
+      <text x="100" y="766" fill="#8B7BA8" font-size="9.5">OpenAI-compatible</text>
+      <text x="100" y="782" fill="#8B7BA8" font-size="9.5">chat completions</text>
+    </g>
+    <g>
+      <rect x="260" y="704" width="164" height="100" rx="10" fill="#120B1F" stroke="#41255F"/>
+      <circle cx="276" cy="724" r="4" fill="#A78BFA"/>
+      <text x="288" y="728" fill="#EDE9FE" font-size="12" font-weight="650">NVIDIA</text>
+      <text x="276" y="746" fill="#B7A8D6" font-size="10">Nemotron</text>
+      <text x="276" y="766" fill="#8B7BA8" font-size="9.5">structured plans</text>
+      <text x="276" y="782" fill="#8B7BA8" font-size="9.5">grounded synthesis</text>
+    </g>
+    <g>
+      <rect x="436" y="704" width="176" height="100" rx="10" fill="#120B1F" stroke="#41255F"/>
+      <circle cx="452" cy="724" r="4" fill="#A78BFA"/>
+      <text x="464" y="728" fill="#EDE9FE" font-size="12" font-weight="650">Simulation / Ollama</text>
+      <text x="452" y="746" fill="#B7A8D6" font-size="10">offline fallback</text>
+      <text x="452" y="766" fill="#8B7BA8" font-size="9.5">deterministic tests</text>
+      <text x="452" y="782" fill="#8B7BA8" font-size="9.5">local_only egress = 0</text>
+    </g>
+
+    <!-- storage -->
+    <g>
+      <rect x="636" y="704" width="131" height="100" rx="10" fill="#07181C" stroke="#155E6B"/>
+      <circle cx="650" cy="724" r="4" fill="#22D3EE"/>
+      <text x="662" y="728" fill="#CFFAFE" font-size="11.5" font-weight="650">Postgres</text>
+      <text x="650" y="746" fill="#9BC9CE" font-size="10">/ SQLite</text>
+      <text x="650" y="766" fill="#78A8AD" font-size="9.5">users · workspaces</text>
+      <text x="650" y="782" fill="#78A8AD" font-size="9.5">memories · audit</text>
+    </g>
+    <g>
+      <rect x="777" y="704" width="131" height="100" rx="10" fill="#07181C" stroke="#155E6B"/>
+      <circle cx="791" cy="724" r="4" fill="#22D3EE"/>
+      <text x="803" y="728" fill="#CFFAFE" font-size="11.5" font-weight="650">Qdrant</text>
+      <text x="791" y="746" fill="#9BC9CE" font-size="10">/ Local index</text>
+      <text x="791" y="766" fill="#78A8AD" font-size="9.5">768-d vectors</text>
+      <text x="791" y="782" fill="#78A8AD" font-size="9.5">cosine recall</text>
+    </g>
+    <g>
+      <rect x="918" y="704" width="131" height="100" rx="10" fill="#07181C" stroke="#155E6B"/>
+      <circle cx="932" cy="724" r="4" fill="#22D3EE"/>
+      <text x="944" y="728" fill="#CFFAFE" font-size="11.5" font-weight="650">Neo4j</text>
+      <text x="932" y="746" fill="#9BC9CE" font-size="10">/ Local graph</text>
+      <text x="932" y="766" fill="#78A8AD" font-size="9.5">entity + tag nodes</text>
+      <text x="932" y="782" fill="#78A8AD" font-size="9.5">relationships</text>
+    </g>
+    <g>
+      <rect x="1059" y="704" width="137" height="100" rx="10" fill="#07181C" stroke="#155E6B"/>
+      <circle cx="1073" cy="724" r="4" fill="#22D3EE"/>
+      <text x="1085" y="728" fill="#CFFAFE" font-size="11.5" font-weight="650">Redis / JSON</text>
+      <text x="1073" y="746" fill="#9BC9CE" font-size="10">approvals</text>
+      <text x="1073" y="766" fill="#78A8AD" font-size="9.5">900s TTL sessions</text>
+      <text x="1073" y="782" fill="#78A8AD" font-size="9.5">cache + replay guard</text>
+    </g>
+  </g>
+
+  <!-- footer -->
+  <text x="64" y="862" fill="#7C8CA3" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12">Local-first fallbacks are first-class: SQLite, local JSON vectors/graph, and deterministic simulation keep the full loop runnable at $0.</text>
+  <rect x="0" y="897" width="1280" height="3" fill="#34D399" fill-opacity="0.55"/>
+</svg>

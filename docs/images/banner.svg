@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="SynapseOS — the AI that remembers, reasons, and acts">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#04070C"/>
+      <stop offset="0.55" stop-color="#071019"/>
+      <stop offset="1" stop-color="#04110E"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#34D399" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#34D399" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3B82F6" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#3B82F6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="accentLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#34D399" stop-opacity="0"/>
+      <stop offset="0.25" stop-color="#34D399" stop-opacity="0.9"/>
+      <stop offset="0.6" stop-color="#60A5FA" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#A78BFA" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94A3B8" stroke-opacity="0.055" stroke-width="1"/>
+    </pattern>
+    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="420" fill="url(#bg)"/>
+  <rect width="1280" height="420" fill="url(#grid)"/>
+  <circle cx="1080" cy="200" r="310" fill="url(#glowA)"/>
+  <circle cx="880" cy="360" r="250" fill="url(#glowB)"/>
+
+  <!-- eyebrow badge -->
+  <g transform="translate(72 54)">
+    <rect width="330" height="32" rx="16" fill="#081A14" stroke="#1D5744"/>
+    <circle cx="19" cy="16" r="4" fill="#34D399"/>
+    <text x="34" y="20.5" fill="#A7F3D0" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="600" letter-spacing="1.5">NEBIUS × NVIDIA HACKATHON 2026</text>
+  </g>
+
+  <!-- wordmark and promise -->
+  <text x="68" y="182" fill="#F8FAFC" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="88" font-weight="800" letter-spacing="-4.5">SynapseOS</text>
+  <text x="72" y="232" fill="#CBD5E1" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="27" font-weight="500">The AI that <tspan fill="#34D399" font-weight="700">remembers</tspan>, reasons, and acts.</text>
+  <text x="72" y="268" fill="#8B9BB0" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16.5">A privacy-first personal AI operating system with persistent memory,</text>
+  <text x="72" y="292" fill="#8B9BB0" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16.5">evidence-backed RAG, and human-in-the-loop agents.</text>
+
+  <!-- capability chips -->
+  <g font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600">
+    <g transform="translate(72 326)">
+      <rect width="156" height="36" rx="18" fill="#0B1A16" stroke="#1D5744"/>
+      <circle cx="18" cy="18" r="3.5" fill="#34D399"/>
+      <text x="30" y="22.5" fill="#D1FAE5">Persistent memory</text>
+    </g>
+    <g transform="translate(240 326)">
+      <rect width="136" height="36" rx="18" fill="#0B1524" stroke="#1E3A5F"/>
+      <circle cx="18" cy="18" r="3.5" fill="#60A5FA"/>
+      <text x="30" y="22.5" fill="#DBEAFE">Grounded RAG</text>
+    </g>
+    <g transform="translate(388 326)">
+      <rect width="146" height="36" rx="18" fill="#1A1407" stroke="#5C4412"/>
+      <circle cx="18" cy="18" r="3.5" fill="#F59E0B"/>
+      <text x="30" y="22.5" fill="#FEF3C7">Approval gates</text>
+    </g>
+    <g transform="translate(546 326)">
+      <rect width="120" height="36" rx="18" fill="#120B1F" stroke="#41255F"/>
+      <circle cx="18" cy="18" r="3.5" fill="#A78BFA"/>
+      <text x="30" y="22.5" fill="#EDE9FE">Local-first</text>
+    </g>
+  </g>
+
+  <!-- neural trust graph -->
+  <g opacity="0.95">
+    <path d="M1040 210 L930 130" stroke="#34D399" stroke-opacity="0.35" stroke-width="1.6"/>
+    <path d="M1040 210 L1150 120" stroke="#60A5FA" stroke-opacity="0.35" stroke-width="1.6"/>
+    <path d="M1040 210 L1180 280" stroke="#A78BFA" stroke-opacity="0.35" stroke-width="1.6"/>
+    <path d="M1040 210 L1020 330" stroke="#22D3EE" stroke-opacity="0.35" stroke-width="1.6"/>
+    <path d="M1040 210 L880 260" stroke="#F59E0B" stroke-opacity="0.35" stroke-width="1.6"/>
+    <path d="M930 130 L880 260" stroke="#94A3B8" stroke-opacity="0.12" stroke-width="1.2"/>
+    <path d="M1150 120 L1180 280" stroke="#94A3B8" stroke-opacity="0.12" stroke-width="1.2"/>
+    <path d="M880 260 L1020 330" stroke="#94A3B8" stroke-opacity="0.12" stroke-width="1.2"/>
+
+    <circle cx="930" cy="130" r="9" fill="#0B1A16" stroke="#34D399" stroke-width="2.5"/>
+    <circle cx="1150" cy="120" r="9" fill="#0B1524" stroke="#60A5FA" stroke-width="2.5"/>
+    <circle cx="1180" cy="280" r="9" fill="#120B1F" stroke="#A78BFA" stroke-width="2.5"/>
+    <circle cx="1020" cy="330" r="9" fill="#07181C" stroke="#22D3EE" stroke-width="2.5"/>
+    <circle cx="880" cy="260" r="9" fill="#1A1407" stroke="#F59E0B" stroke-width="2.5"/>
+
+    <text x="900" y="108" fill="#6EE7B7" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing="1.6">MEMORY</text>
+    <text x="1108" y="100" fill="#93C5FD" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing="1.6">REASON</text>
+    <text x="1140" y="310" fill="#C4B5FD" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing="1.6">APPROVE</text>
+    <text x="982" y="360" fill="#67E8F9" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing="1.6">ACT</text>
+  </g>
+
+  <!-- trust core -->
+  <g filter="url(#softGlow)">
+    <path d="M1040 154 L1094 176 V216 C1094 246 1070 264 1040 274 C1010 264 986 246 986 216 V176 Z" fill="#07130F" stroke="#34D399" stroke-width="2.5"/>
+    <path d="M1021 213 L1035 227 L1062 197" fill="none" stroke="#34D399" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <rect x="0" y="417" width="1280" height="3" fill="url(#accentLine)"/>
+</svg>
