@@ -146,7 +146,7 @@ export function HeroSection() {
             <div key={i} className="flex gap-16">
               {[
                 { value: "100%", label: "Evidence-Backed RAG", company: "ZERO HALLUCINATION" },
-                { value: "340B", label: "NVIDIA Nemotron", company: "NEBIUS TOKEN FACTORY" },
+                { value: "70B", label: "NVIDIA Nemotron", company: "NEBIUS TOKEN FACTORY" },
                 { value: "Local-First", label: "Encrypted Vector DB", company: "PRIVACY FIRST" },
                 { value: "Bounded", label: "Human Approval Gates", company: "SAFE EXECUTION" },
               ].map((stat) => (

@@ -67,13 +67,13 @@ const mockMemories: Memory[] = [
     workspace_id: "ws_personal_vault",
     project_id: "proj_1",
     title: "Nebius Token Factory & NVIDIA Nemotron Integration",
-    content: "Integrated high-throughput NVIDIA Nemotron-4-340B-Instruct on Nebius GPU infrastructure for structured Pydantic plan decomposition with tool selection.",
+    content: "Integrated high-throughput NVIDIA Nemotron models on Nebius GPU infrastructure for structured Pydantic plan decomposition with tool selection.",
     summary: "Inference connectivity benchmarks and parameter specs for Nemotron models.",
     embedding_id: "emb_2",
     memory_type: "concept",
     source: "agent_synthesis",
     source_url: null,
-    metadata_json: { model: "nvidia/nemotron-4-340b-instruct" },
+    metadata_json: { model: "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF" },
     importance_score: 0.94,
     confidence: 0.98,
     status: "active",
@@ -157,7 +157,7 @@ const mockGraph: GraphData = {
     { id: "node_2", label: "Nebius Inference", type: "concept", memory_type: "concept" },
     { id: "node_3", label: "SSRF Guardrails", type: "rule", memory_type: "rule" },
     { id: "node_4", label: "User Preferences", type: "preference", memory_type: "preference" },
-    { id: "node_5", label: "NVIDIA Nemotron 340B", type: "concept", memory_type: "concept" },
+    { id: "node_5", label: "NVIDIA Nemotron 70B", type: "concept", memory_type: "concept" },
     { id: "node_6", label: "Grounded RAG Engine", type: "system", memory_type: "system" },
     { id: "node_7", label: "Human Approval Gate", type: "rule", memory_type: "rule" },
     { id: "node_8", label: "Multi-Modal Ingest", type: "document", memory_type: "document" },
@@ -176,29 +176,31 @@ const mockGraph: GraphData = {
 const mockPendingApproval: AgentChatResponse = {
   session_id: "sess_approval_894",
   status: "awaiting_approval",
-  message: "I have decomposed your instruction into 3 steps. Step 2 requires creating guardrails.json in workspace storage. Human approval is required.",
+  message: "I have decomposed your instruction into 3 steps. Step 2 requires creating the Guardrails Rollout project. Human approval is required.",
   plan: {
     goal: "Deploy production guardrails and configure workspace policies",
-    reasoning: "Step 1 retrieves memory rules. Step 2 creates the guardrail configuration file. Step 3 logs the audit trail.",
+    reasoning: "Step 1 retrieves security rules. Step 2 creates the Guardrails Rollout project. Step 3 records the audit trail in memory.",
     confidence_score: 0.98,
     steps: [
-      { step_number: 1, description: "Retrieve active security rules", tool_name: "memory_retrieve", tool_args: { query: "security policies" }, requires_approval: false, status: "completed" },
-      { step_number: 2, description: "Write guardrails policy configuration", tool_name: "workspace_file_create", tool_args: { path: "guardrails.json" }, requires_approval: true, status: "awaiting_approval" },
-      { step_number: 3, description: "Record verification in persistent memory", tool_name: "memory_record", tool_args: { title: "Policy Update" }, requires_approval: false, status: "pending" }
+      { step_number: 1, description: "Retrieve active security rules", tool_name: "search_knowledge", tool_args: { query: "security policies" }, requires_approval: false, status: "completed" },
+      { step_number: 2, description: "Create the Guardrails Rollout project", tool_name: "create_project", tool_args: { name: "Guardrails Rollout" }, requires_approval: true, status: "awaiting_approval" },
+      { step_number: 3, description: "Record verification in persistent memory", tool_name: "create_memory", tool_args: { title: "Policy Update" }, requires_approval: false, status: "pending" }
     ],
   },
   pending_step: {
     step_number: 2,
-    description: "Write guardrails policy configuration",
-    tool_name: "workspace_file_create",
-    tool_args: { path: "guardrails.json" },
+    description: "Create the Guardrails Rollout project",
+    tool_name: "create_project",
+    tool_args: { name: "Guardrails Rollout" },
     requires_approval: true,
     status: "awaiting_approval"
   },
   executed_steps: [
-    { step_number: 1, description: "Retrieve active security rules", tool_name: "memory_retrieve", tool_args: { query: "security policies" }, requires_approval: false, status: "completed" }
+    { step_number: 1, description: "Retrieve active security rules", tool_name: "search_knowledge", tool_args: { query: "security policies" }, requires_approval: false, status: "completed" }
   ],
-  model_used: "nvidia/nemotron-3-8b",
+  model_used: "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",
+  provider: "nebius-token-factory (simulated)",
+  is_simulated: true,
   latency_ms: 312
 };
 
