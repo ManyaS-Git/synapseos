@@ -215,8 +215,12 @@ async def _execute_generate_plan(args: dict[str, Any], ctx: Any) -> dict[str, An
     }
 
 
+import re
+import httpx
+
+
 async def _execute_web_research(args: dict[str, Any], ctx: Any) -> dict[str, Any]:
-    """Perform deterministic research summary for topic with SSRF protection."""
+    """Perform real research fetch for topic with SSRF protection."""
     query = args["query"]
     target_url = args.get("target_url")
 
@@ -231,13 +235,43 @@ async def _execute_web_research(args: dict[str, Any], ctx: Any) -> dict[str, Any
                 "error": f"Security restriction: {reason}",
             }
 
+        try:
+            async with httpx.AsyncClient(timeout=6.0, follow_redirects=True) as client:
+                resp = await client.get(
+                    target_url,
+                    headers={"User-Agent": "SynapseOS-ResearchBot/1.0 (+https://synapseos-three.vercel.app)"},
+                )
+                resp.raise_for_status()
+                raw_text = resp.text[:100000]
+                clean_text = re.sub(r"<script[^>]*>.*?</script>", "", raw_text, flags=re.DOTALL | re.IGNORECASE)
+                clean_text = re.sub(r"<style[^>]*>.*?</style>", "", clean_text, flags=re.DOTALL | re.IGNORECASE)
+                clean_text = re.sub(r"<[^>]+>", " ", clean_text)
+                clean_text = " ".join(clean_text.split())[:1500]
+                return {
+                    "status": "success",
+                    "query": query,
+                    "url": target_url,
+                    "http_status": resp.status_code,
+                    "content_length": len(raw_text),
+                    "summary": f"Fetched external content from {target_url} (HTTP {resp.status_code}): {clean_text[:350]}...",
+                    "extracted_text": clean_text,
+                }
+        except Exception as e:
+            logger.warning("Web research fetch failed", url=target_url, error=str(e))
+            return {
+                "status": "error",
+                "query": query,
+                "url": target_url,
+                "error": f"Failed to fetch external URL ({type(e).__name__}): {str(e)}",
+            }
+
     return {
         "status": "success",
         "query": query,
-        "url": target_url,
+        "url": None,
         "summary": (
-            f"Research summary for '{query}': Identified primary concepts, verified best practices, "
-            "and integrated relevant architectural guidance for local-first AI system."
+            f"Research topic '{query}': No external target URL specified. "
+            "To inspect live external documentation, provide a safe target_url parameter."
         ),
     }
 

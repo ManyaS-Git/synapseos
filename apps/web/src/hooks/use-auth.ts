@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUser as useClerkUser } from "@clerk/nextjs";
-import { authApi, workspacesApi, projectsApi } from "@/lib/api";
+import { authApi, workspacesApi, projectsApi, usersApi, healthApi } from "@/lib/api";
 import { useAuthStore } from "@/store";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { useProjectStore } from "@/store/project-store";
@@ -257,6 +257,32 @@ export function useCreateProject() {
       queryClient.invalidateQueries({
         queryKey: ["projects", variables.workspaceId],
       });
+    },
+  });
+}
+
+/* ── System Health & Profile Hooks ────────────────────────────────── */
+
+export function useHealthReady() {
+  return useQuery({
+    queryKey: ["healthReady"],
+    queryFn: () => healthApi.ready(),
+    refetchInterval: 30000,
+    staleTime: 10000,
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  const { setUser } = useAuthStore();
+
+  return useMutation({
+    mutationFn: (data: { full_name?: string; avatar_url?: string }) =>
+      usersApi.updateProfile(data),
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
+      queryClient.setQueryData(["auth", "me"], updatedUser);
+      queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
     },
   });
 }

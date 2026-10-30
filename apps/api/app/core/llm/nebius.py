@@ -593,10 +593,12 @@ class NebiusNemotronClient:
                 "[Citation 1] provides the primary evidence."
             )
 
-        # Standard conversational response
+        # Standard conversational response in offline/simulation fallback mode
         return (
-            "I have analyzed your request in SynapseOS using NVIDIA Nemotron reasoning. "
-            "Your workspace context and private memories have been consulted to provide this answer."
+            "[Simulation Mode] Live inference credentials (NEBIUS_API_KEY) are not configured. "
+            "SynapseOS is currently running in deterministic offline simulation mode. "
+            f"Received instruction: '{last_message[:120]}'. "
+            "To activate live NVIDIA Nemotron cloud inference, configure NEBIUS_API_KEY in the backend environment."
         )
 
 

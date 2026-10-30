@@ -2,14 +2,26 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, useUpdateProfile, useHealthReady } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/sidebar";
 
 export default function SettingsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const updateProfileMutation = useUpdateProfile();
+  const { data: healthReady, isLoading: healthLoading } = useHealthReady();
   const router = useRouter();
+
+  const [fullName, setFullName] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState(false);
+  const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    if (user?.full_name) {
+      setFullName(user.full_name);
+    }
+  }, [user?.full_name]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -27,6 +39,29 @@ export default function SettingsPage() {
 
   if (!isAuthenticated || !user) return null;
 
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSuccess(false);
+    setProfileError("");
+    try {
+      await updateProfileMutation.mutateAsync({
+        full_name: fullName.trim(),
+      });
+      setProfileSuccess(true);
+      setTimeout(() => setProfileSuccess(false), 4000);
+    } catch (err: unknown) {
+      setProfileError(err instanceof Error ? err.message : "Failed to update profile");
+    }
+  };
+
+  // Extract live provider status from healthReady probe
+  const nebiusService = healthReady?.services?.nebius_token_factory as
+    | { status?: string; configured?: boolean; model?: string; provider?: string }
+    | undefined;
+  const isNebiusConfigured = Boolean(nebiusService?.configured);
+  const isNebiusHealthy = nebiusService?.status === "healthy";
+  const storageMode = (healthReady as unknown as { storage_mode?: string })?.storage_mode || "local_embedded";
+
   return (
     <div className="min-h-screen flex bg-background">
       <Sidebar />
@@ -34,14 +69,24 @@ export default function SettingsPage() {
       <main className="flex-1 overflow-auto">
         <header className="border-b border-border px-8 py-6">
           <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground mt-1">Manage your account</p>
+          <p className="text-muted-foreground mt-1">Manage your account and operational configuration</p>
         </header>
 
         <div className="px-8 py-6 max-w-2xl space-y-6">
           {/* Profile Section */}
           <div className="bg-card border border-border rounded-xl p-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Profile</h2>
-            <div className="space-y-4">
+            {profileSuccess && (
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                Profile updated successfully and persisted to database.
+              </div>
+            )}
+            {profileError && (
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-xs text-destructive font-medium">
+                {profileError}
+              </div>
+            )}
+            <form onSubmit={handleSaveProfile} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
                   Username
@@ -70,12 +115,22 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="text"
-                  defaultValue={user.full_name || ""}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                   placeholder="Your full name"
                 />
               </div>
-            </div>
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={updateProfileMutation.isPending}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {updateProfileMutation.isPending ? "Saving..." : "Save Profile"}
+                </button>
+              </div>
+            </form>
           </div>
 
           {/* Nebius × NVIDIA Inference Engine */}
@@ -87,29 +142,49 @@ export default function SettingsPage() {
                   Powered by NVIDIA open models hosted on high-throughput Nebius infrastructure.
                 </p>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Connected
-              </span>
+              {healthLoading ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                  Probing...
+                </span>
+              ) : isNebiusHealthy && isNebiusConfigured ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Nebius AI
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  Simulation Mode (Offline Fallback)
+                </span>
+              )}
             </div>
 
             <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between text-xs py-2 px-3 rounded-lg border border-border bg-background">
+                <span className="text-muted-foreground">Active Storage Layer</span>
+                <span className="font-semibold text-foreground">
+                  {storageMode === "distributed"
+                    ? "Distributed (PostgreSQL + Qdrant + Neo4j)"
+                    : "Local Embedded (SQLite + Local Vector Index)"}
+                </span>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
                   Active Model
                 </label>
                 <select
-                  defaultValue="nvidia/nemotron-4-340b-instruct"
+                  defaultValue={nebiusService?.model || "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF"}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                 >
+                  <option value="nvidia/Llama-3.1-Nemotron-70B-Instruct-HF">
+                    nvidia/Llama-3.1-Nemotron-70B-Instruct-HF (Active)
+                  </option>
                   <option value="nvidia/nemotron-4-340b-instruct">
                     nvidia/nemotron-4-340b-instruct (Nebius Token Factory)
                   </option>
                   <option value="nvidia/llama-3.1-nemotron-70b-instruct">
                     nvidia/llama-3.1-nemotron-70b-instruct (Nebius Token Factory)
-                  </option>
-                  <option value="meta-llama/Meta-Llama-3.1-70B-Instruct">
-                    meta-llama/Meta-Llama-3.1-70B-Instruct (Nebius Cloud)
                   </option>
                   <option value="local/ollama-fallback">
                     Local Ollama (Offline Fallback)

@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore, useWorkspaceStore } from "@/store";
@@ -248,5 +249,27 @@ export default function ShowcasePage() {
     );
   }
 
-  return <SynapseApp initialTab={tab} />;
+  return (
+    <div>
+      <aside
+        aria-label="Showcase mode notice"
+        className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-center text-xs font-medium text-amber-900 dark:text-amber-200 sticky top-0 z-50 backdrop-blur-md flex items-center justify-center gap-2"
+      >
+        <span className="font-semibold uppercase tracking-wider text-[10px] bg-amber-500/20 px-2 py-0.5 rounded">
+          Preview Mode
+        </span>
+        <span>
+          Displaying sample demonstration dataset. To interact with your real memories and live inference,{" "}
+          <Link
+            href="/dashboard"
+            className="underline underline-offset-4 font-semibold text-primary hover:text-primary/80"
+          >
+            open your Dashboard
+          </Link>
+          .
+        </span>
+      </aside>
+      <SynapseApp initialTab={tab} />
+    </div>
+  );
 }

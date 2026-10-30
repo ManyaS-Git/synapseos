@@ -143,6 +143,29 @@ class MemoryService:
                     target_id=str(project_id),
                     relationship_type="BELONGS_TO",
                 )
+
+            # Establish semantic knowledge graph edges for categorization tags
+            if tags:
+                for tag in tags[:4]:
+                    clean_tag = str(tag).strip().lower().lstrip("#")
+                    if clean_tag:
+                        tag_node_id = f"tag_{clean_tag}_{workspace_id}"
+                        await self.graph.create_node(
+                            node_id=tag_node_id,
+                            label="Tag",
+                            properties={
+                                "title": f"#{clean_tag}",
+                                "workspace_id": str(workspace_id),
+                                "project_id": str(project_id) if project_id else None,
+                                "type": "tag",
+                                "memory_type": "tag",
+                            },
+                        )
+                        await self.graph.create_relationship(
+                            source_id=str(memory.id),
+                            target_id=tag_node_id,
+                            relationship_type="TAGGED_WITH",
+                        )
         except Exception as e:
             logger.warning("Graph creation failed, memory saved without graph node", error=str(e))
 
