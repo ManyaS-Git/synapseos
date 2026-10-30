@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/images/banner.svg" alt="SynapseOS — the privacy-first personal AI operating system that remembers, reasons, and acts" width="100%" />
-</p>
-
 <h1 align="center">SynapseOS</h1>
 
 <p align="center">
@@ -127,21 +123,12 @@ The result is an AI that can **remember your context, explain its reasoning, and
 </tr>
 </table>
 
-<details>
-<summary><strong>Landing page — open the complete full-page capture</strong></summary>
-<p align="center">
-  <a href="docs/images/screenshot_landing.jpg"><img src="docs/images/screenshot_landing.jpg" alt="Complete SynapseOS landing page including hero, product pillars, architecture, privacy posture, and call to action" width="38%" /></a>
-</p>
-<p align="center"><sub><strong>Landing page (complete page)</strong> — hero, product pillars, memory architecture, privacy posture, and call to action. Click the image for the full-resolution capture.</sub></p>
-</details>
-
 ### Complete app pages
 
 Full-page captures of every SynapseOS surface, taken from the seeded demo workspace on `/showcase` and the public entry pages. No live user data is shown.
 
 | | | |
 | :--- | :--- | :--- |
-| **🏠 Landing** | [![Landing](docs/images/screenshots/screenshot_landing.png)](docs/images/screenshots/screenshot_landing.png) | Homepage hero, features, and call to action |
 | **🔐 Login** | [![Login](docs/images/screenshots/screenshot_login.png)](docs/images/screenshots/screenshot_login.png) | Clerk-backed sign-in with development mode |
 | **📝 Register** | [![Register](docs/images/screenshots/screenshot_register.png)](docs/images/screenshots/screenshot_register.png) | Account creation flow |
 | **📊 Dashboard / Overview** | [![Overview](docs/images/screenshots/screenshot_overview.png)](docs/images/screenshots/screenshot_overview.png) | Memory counts, health, pending actions, knowledge activity |
