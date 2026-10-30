@@ -2,15 +2,142 @@ const puppeteer = require('puppeteer-core');
 const path = require('path');
 const fs = require('fs');
 
-const EDGE_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const EDGE_PATH =
+  process.env.EDGE_PATH ||
+  'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const BASE_URL = process.env.CAPTURE_BASE_URL || 'http://localhost:3000';
 const OUTPUT_DIR = path.join(__dirname, '..', 'docs', 'images');
+const VIEWPORT = { width: 1600, height: 1050 };
 
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function settle(page) {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    const images = Array.from(document.images).filter((img) => !img.complete);
+    if (images.length > 0) {
+      await new Promise((resolve) => {
+        let remaining = images.length;
+        const done = () => {
+          remaining -= 1;
+          if (remaining <= 0) resolve();
+        };
+        images.forEach((img) => {
+          img.addEventListener('load', done, { once: true });
+          img.addEventListener('error', done, { once: true });
+        });
+        setTimeout(resolve, 3000);
+      });
+    }
+  });
+  await sleep(1200);
+}
+
+async function freezeAnimations(page) {
+  await page.addStyleTag({
+    content: `
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        caret-color: transparent !important;
+      }
+      html { scroll-behavior: auto !important; }
+    `,
+  });
+}
+
+async function prepareForFullPage(page) {
+  const height = await page.evaluate(() =>
+    Math.max(
+      document.documentElement.scrollHeight,
+      document.body.scrollHeight,
+      window.innerHeight
+    )
+  );
+
+  // Fixed sidebars only cover the first viewport in a full-page capture.
+  // Extend them to the document height so the complete page is represented.
+  await page.addStyleTag({
+    content: `
+      aside.fixed {
+        position: absolute !important;
+        top: 0 !important;
+        bottom: auto !important;
+        height: ${height}px !important;
+      }
+      body { overflow: visible !important; }
+    `,
+  });
+  await sleep(400);
+  return height;
+}
+
+async function capture(page, name, route, options = {}) {
+  const scale = options.scale || 2;
+
+  await page.setViewport({
+    width: VIEWPORT.width,
+    height: VIEWPORT.height,
+    deviceScaleFactor: scale,
+  });
+
+  console.log(`Capturing ${name} from ${route} ...`);
+  await page.goto(`${BASE_URL}${route}`, {
+    waitUntil: 'networkidle2',
+    timeout: 60000,
+  });
+  await freezeAnimations(page);
+  await settle(page);
+
+  if (options.after) {
+    await options.after(page);
+    await settle(page);
+  }
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const height = await prepareForFullPage(page);
+  const outputPath = path.join(OUTPUT_DIR, name);
+  await page.screenshot({
+    path: outputPath,
+    type: 'jpeg',
+    quality: 92,
+    fullPage: true,
+    captureBeyondViewport: true,
+  });
+  console.log(
+    `Saved ${name}: ${VIEWPORT.width}x${Math.round(height)} CSS px at ${scale}x`
+  );
+}
+
+async function openApprovalGate(page) {
+  const input = 'textarea[aria-label="Message the assistant"]';
+  await page.waitForSelector(input, { timeout: 10000 });
+  await page.click(input);
+  await page.type(
+    input,
+    'Create a guardrails rollout project and configure workspace policies',
+    { delay: 8 }
+  );
+  const clicked = await page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll('button'));
+    const send = buttons.find((button) => button.textContent?.trim() === 'Send');
+    if (!send) return false;
+    send.click();
+    return true;
+  });
+  if (!clicked) {
+    throw new Error('Assistant send button was not found');
+  }
+  await sleep(1800);
+}
+
 async function run() {
-  console.log('Launching Edge for crisp 2x application captures...');
+  console.log('Launching Edge for full-page application captures...');
   const browser = await puppeteer.launch({
     executablePath: EDGE_PATH,
     headless: 'new',
@@ -19,11 +146,11 @@ async function run() {
       '--disable-setuid-sandbox',
       '--disable-gpu',
       '--disable-dev-shm-usage',
-      '--window-size=1600,1050',
+      '--force-color-profile=srgb',
     ],
     defaultViewport: {
-      width: 1600,
-      height: 1050,
+      width: VIEWPORT.width,
+      height: VIEWPORT.height,
       deviceScaleFactor: 2,
     },
   });
@@ -31,88 +158,29 @@ async function run() {
   try {
     const page = await browser.newPage();
 
-    // 1. Dashboard Overview
-    console.log('Capturing Real Dashboard Overview...');
-    await page.goto('http://localhost:3000/showcase?tab=Overview', { waitUntil: 'networkidle2', timeout: 30000 });
-    await new Promise(r => setTimeout(r, 2000));
-    const overviewPath = path.join(OUTPUT_DIR, 'real_dashboard_overview.png');
-    await page.screenshot({ path: overviewPath });
-    console.log('Saved:', overviewPath);
+    // Public entry points
+    await capture(page, 'screenshot_landing.jpg', '/', { scale: 1 });
+    await capture(page, 'screenshot_login.jpg', '/login');
+    await capture(page, 'screenshot_register.jpg', '/register');
 
-    // 2. Assistant Copilot
-    console.log('Capturing Real Assistant Copilot...');
-    await page.goto('http://localhost:3000/showcase?tab=Assistant', { waitUntil: 'networkidle2', timeout: 30000 });
-    await new Promise(r => setTimeout(r, 2000));
-    // Click on the prompt to start an active reasoning view
-    try {
-      await page.evaluate(() => {
-        const buttons = Array.from(document.querySelectorAll('button'));
-        const promptBtn = buttons.find(b => b.textContent && b.textContent.includes('What did I decide'));
-        if (promptBtn) promptBtn.click();
-      });
-      await new Promise(r => setTimeout(r, 1500));
-    } catch {}
-    const assistantPath = path.join(OUTPUT_DIR, 'real_assistant_copilot.png');
-    await page.screenshot({ path: assistantPath });
-    console.log('Saved:', assistantPath);
-
-    // 3. Memory Manager
-    console.log('Capturing Real Memory Manager...');
-    await page.goto('http://localhost:3000/showcase?tab=Memory', { waitUntil: 'networkidle2', timeout: 30000 });
-    await new Promise(r => setTimeout(r, 2000));
-    const memPath = path.join(OUTPUT_DIR, 'real_memory_manager.png');
-    await page.screenshot({ path: memPath });
-    console.log('Saved:', memPath);
-
-    // 4. Interactive Knowledge Graph
-    console.log('Capturing Real Knowledge Graph...');
-    await page.goto('http://localhost:3000/showcase?tab=Graph', { waitUntil: 'networkidle2', timeout: 30000 });
-    await new Promise(r => setTimeout(r, 2500));
-    const graphPath = path.join(OUTPUT_DIR, 'real_knowledge_graph.png');
-    await page.screenshot({ path: graphPath });
-    console.log('Saved:', graphPath);
-
-    // 5. Landing Page Hero
-    console.log('Capturing Landing Page Hero...');
-    await page.goto('http://localhost:3000', { waitUntil: 'networkidle2', timeout: 30000 });
-    await new Promise(r => setTimeout(r, 2000));
-    const heroPath = path.join(OUTPUT_DIR, 'real_landing_hero.png');
-    await page.screenshot({ path: heroPath, fullPage: false });
-    console.log('Saved:', heroPath);
-
-    // 6. Features section
-    console.log('Capturing Features Section...');
-    await page.evaluate(() => {
-      const el = document.getElementById('how-it-works') || document.getElementById('features');
-      if (el) el.scrollIntoView();
+    // Complete showcase application pages
+    await capture(page, 'screenshot_overview.jpg', '/showcase?tab=Overview');
+    await capture(page, 'screenshot_assistant.jpg', '/showcase?tab=Assistant', {
+      after: openApprovalGate,
     });
-    await new Promise(r => setTimeout(r, 1500));
-    const featPath = path.join(OUTPUT_DIR, 'real_features.png');
-    await page.screenshot({ path: featPath, fullPage: false });
-    console.log('Saved:', featPath);
+    await capture(page, 'screenshot_memory.jpg', '/showcase?tab=Memory');
+    await capture(page, 'screenshot_graph.jpg', '/showcase?tab=Graph');
+    await capture(page, 'screenshot_documents.jpg', '/showcase?tab=Documents');
+    await capture(page, 'screenshot_agents.jpg', '/showcase?tab=Agents');
+    await capture(page, 'screenshot_activity.jpg', '/showcase?tab=Activity');
 
-    // 7. Login Page
-    console.log('Capturing Login Page...');
-    await page.goto('http://localhost:3000/login', { waitUntil: 'networkidle2', timeout: 30000 });
-    await new Promise(r => setTimeout(r, 1500));
-    const loginPath = path.join(OUTPUT_DIR, 'real_login.png');
-    await page.screenshot({ path: loginPath, fullPage: false });
-    console.log('Saved:', loginPath);
-
-    // 8. Register Page
-    console.log('Capturing Register Page...');
-    await page.goto('http://localhost:3000/register', { waitUntil: 'networkidle2', timeout: 30000 });
-    await new Promise(r => setTimeout(r, 1500));
-    const regPath = path.join(OUTPUT_DIR, 'real_register.png');
-    await page.screenshot({ path: regPath, fullPage: false });
-    console.log('Saved:', regPath);
-
-    console.log('SUCCESS: All 8 real application screenshots captured!');
-  } catch (err) {
-    console.error('Capture error:', err);
+    console.log('SUCCESS: Full-page application screenshots captured.');
   } finally {
     await browser.close();
   }
 }
 
-run();
+run().catch((error) => {
+  console.error('Capture error:', error);
+  process.exitCode = 1;
+});

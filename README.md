@@ -65,40 +65,92 @@ The result is an AI that can **remember your context, explain its reasoning, and
 
 ## 📸 Product tour
 
-> Screenshots are captured from the public **`/showcase`** experience using a seeded sample workspace. They show the real product UI without exposing any user's data.
+> These are **full-page screenshots** of SynapseOS, captured from the `/showcase` experience and the public entry pages using a seeded sample workspace. They show the real product UI and contain no live user data. The public deployment runs in deterministic simulation mode; inference badges read **Simulation Mode** until `NEBIUS_API_KEY` is configured.
 
 ### Command center
 
 <p align="center">
-  <img src="docs/images/real_dashboard_overview.png" alt="SynapseOS dashboard with memory counts, grounded recall rate, workspaces, and live backend status" width="100%" />
+  <a href="docs/images/screenshot_overview.jpg"><img src="docs/images/screenshot_overview.jpg" alt="Full SynapseOS workspace overview with memory counts, grounded-recall telemetry, recent memories, and system status" width="100%" /></a>
 </p>
 
-<p align="center"><sub><strong>Dashboard</strong> — workspace health, persistent memory inventory, grounded-recall telemetry, and live infrastructure status in one view.</sub></p>
+<p align="center"><sub><strong>Workspace overview (complete page)</strong> — memory health, grounded-recall telemetry, recent memories, and live infrastructure status in one view.</sub></p>
 
 ### Assistant + human approval gate
+
+<p align="center">
+  <a href="docs/images/screenshot_assistant.jpg"><img src="docs/images/screenshot_assistant.jpg" alt="Full SynapseOS assistant page showing a three-step plan, a simulation-mode inference badge, and a human approval card for create_project" width="100%" /></a>
+</p>
+
+<p align="center"><sub><strong>Assistant copilot (complete page)</strong> — a three-step plan pauses at a single-use approval gate before the consequential <code>create_project</code> tool can run. The badge identifies simulated inference.</sub></p>
+
+### Memory, graph, documents, and agents
 
 <table>
 <tr>
 <td width="50%" valign="top">
-  <img src="docs/images/real_assistant_copilot.png" alt="SynapseOS assistant copilot showing a consequential action approval gate" width="100%" />
-  <p align="center"><sub><strong>Copilot</strong> — grounded answers, tool traces, and inline approval for consequential actions.</sub></p>
+  <a href="docs/images/screenshot_memory.jpg"><img src="docs/images/screenshot_memory.jpg" alt="Full SynapseOS memory manager page with persistent memory entries, provenance, and semantic search" width="100%" /></a>
+  <p align="center"><sub><strong>Memory manager</strong> — durable memories, document extracts, provenance, and semantic search.</sub></p>
 </td>
 <td width="50%" valign="top">
-  <img src="docs/images/real_knowledge_graph.png" alt="SynapseOS interactive knowledge graph of memory entities and relationships" width="100%" />
+  <a href="docs/images/screenshot_graph.jpg"><img src="docs/images/screenshot_graph.jpg" alt="Full SynapseOS knowledge graph page showing memory entities, relationships, and similarity controls" width="100%" /></a>
   <p align="center"><sub><strong>Knowledge graph</strong> — explore entities, memory clusters, and relationships with similarity thresholds.</sub></p>
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-  <img src="docs/images/real_memory_manager.png" alt="SynapseOS memory manager with persistent memory entries and semantic search" width="100%" />
-  <p align="center"><sub><strong>Memory manager</strong> — durable memories, document extracts, provenance, and semantic search.</sub></p>
+  <a href="docs/images/screenshot_documents.jpg"><img src="docs/images/screenshot_documents.jpg" alt="Full SynapseOS documents page with ingestion status, supported formats, and document inventory" width="100%" /></a>
+  <p align="center"><sub><strong>Documents</strong> — ingestion, format support, processing status, and the workspace document inventory.</sub></p>
 </td>
 <td width="50%" valign="top">
-  <img src="docs/images/real_landing_hero.png" alt="SynapseOS landing page with product positioning and architecture" width="100%" />
-  <p align="center"><sub><strong>Landing experience</strong> — the public entry point, with clear product boundaries and privacy posture.</sub></p>
+  <a href="docs/images/screenshot_agents.jpg"><img src="docs/images/screenshot_agents.jpg" alt="Full SynapseOS agents page with the bounded agent runtime, tool registry, and execution guardrails" width="100%" /></a>
+  <p align="center"><sub><strong>Agents</strong> — the bounded agent runtime, tool registry, and execution guardrails.</sub></p>
 </td>
 </tr>
 </table>
+
+### Activity, authentication, and landing page
+
+<table>
+<tr>
+<td width="33.33%" valign="top">
+  <a href="docs/images/screenshot_activity.jpg"><img src="docs/images/screenshot_activity.jpg" alt="Full SynapseOS activity page with audit events and runtime traces" width="100%" /></a>
+  <p align="center"><sub><strong>Activity</strong> — audit events and runtime traces.</sub></p>
+</td>
+<td width="33.33%" valign="top">
+  <a href="docs/images/screenshot_login.jpg"><img src="docs/images/screenshot_login.jpg" alt="Full SynapseOS login page" width="100%" /></a>
+  <p align="center"><sub><strong>Login</strong> — local or Clerk-backed authentication.</sub></p>
+</td>
+<td width="33.33%" valign="top">
+  <a href="docs/images/screenshot_register.jpg"><img src="docs/images/screenshot_register.jpg" alt="Full SynapseOS registration page" width="100%" /></a>
+  <p align="center"><sub><strong>Registration</strong> — create a workspace and start with a private memory vault.</sub></p>
+</td>
+</tr>
+</table>
+
+<details>
+<summary><strong>Landing page — open the complete full-page capture</strong></summary>
+<p align="center">
+  <a href="docs/images/screenshot_landing.jpg"><img src="docs/images/screenshot_landing.jpg" alt="Complete SynapseOS landing page including hero, product pillars, architecture, privacy posture, and call to action" width="38%" /></a>
+</p>
+<p align="center"><sub><strong>Landing page (complete page)</strong> — hero, product pillars, memory architecture, privacy posture, and call to action. Click the image for the full-resolution capture.</sub></p>
+</details>
+
+### Complete app pages
+
+Full-page captures of every SynapseOS surface, taken from the seeded demo workspace on `/showcase` and the public entry pages. No live user data is shown.
+
+| | | |
+| :--- | :--- | :--- |
+| **🏠 Landing** | [![Landing](docs/images/screenshots/screenshot_landing.png)](docs/images/screenshots/screenshot_landing.png) | Homepage hero, features, and call to action |
+| **🔐 Login** | [![Login](docs/images/screenshots/screenshot_login.png)](docs/images/screenshots/screenshot_login.png) | Clerk-backed sign-in with development mode |
+| **📝 Register** | [![Register](docs/images/screenshots/screenshot_register.png)](docs/images/screenshots/screenshot_register.png) | Account creation flow |
+| **📊 Dashboard / Overview** | [![Overview](docs/images/screenshots/screenshot_overview.png)](docs/images/screenshots/screenshot_overview.png) | Memory counts, health, pending actions, knowledge activity |
+| **💬 Assistant** | [![Assistant](docs/images/screenshots/screenshot_assistant.png)](docs/images/screenshots/screenshot_assistant.png) | Copilot with agent reasoning, grounded RAG, and approval gate |
+| **🧠 Memory** | [![Memory](docs/images/screenshots/screenshot_memory.png)](docs/images/screenshots/screenshot_memory.png) | Persistent memory manager with semantic search |
+| **🕸️ Knowledge Graph** | [![Graph](docs/images/screenshots/screenshot_graph.png)](docs/images/screenshots/screenshot_graph.png) | Memory entities, relationships, and similarity |
+| **📄 Documents** | [![Documents](docs/images/screenshots/screenshot_documents.png)](docs/images/screenshots/screenshot_documents.png) | Ingestion status and document inventory |
+| **🤖 Agents** | [![Agents](docs/images/screenshots/screenshot_agents.png)](docs/images/screenshots/screenshot_agents.png) | Bounded agent runtime and safety controls |
+| **📈 Activity** | [![Activity](docs/images/screenshots/screenshot_activity.png)](docs/images/screenshots/screenshot_activity.png) | Audit trail and runtime traces |
 
 ### A 3-minute judge tour
 
